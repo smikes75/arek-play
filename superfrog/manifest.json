@@ -1,0 +1,153 @@
+{
+ "game": "Superfrog (Team17, 1993), level 1 Magic Woods",
+ "kit": "amiga-re-kit 0.5.8",
+ "total_bytes": 1771449,
+ "accepted_disks": [
+  {
+   "disks": [
+    "3484059b87a40da5a297b3926470c6843120094d4e5154a871d4f57a8c126768"
+   ],
+   "name": "spfrogd1.adf (Superfrog disk 1, Crystal crack)"
+  }
+ ],
+ "files": [
+  {
+   "path": "ABOUT.md",
+   "size": 2125,
+   "sha256": "3bfba9efe5d4b5adb739f76acbb414e8f0572b00cdbbfc3c7888d2c582fd1df0",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "audio-worklet.js",
+   "size": 2283,
+   "sha256": "3396ee3e21df969a27f1febf610913d74aaed08ff14af49f4a5c38b77b744830",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "engine.js",
+   "size": 17697,
+   "sha256": "2c3bbdc21fbeef28340ae6f2b8756bc58dd3d8b76f5490c644d900ca03abf94e",
+   "derived": false,
+   "sealed": false,
+   "note": "Emscripten glue (generic, no game logic)"
+  },
+  {
+   "path": "index.html",
+   "size": 6467,
+   "sha256": "12387299fb57a0086b7e14667b11bc7a580921115fefe125b4442705982c32fb",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "main.js",
+   "size": 16290,
+   "sha256": "64cc57c83b30c2f46233f0082b71eabcad55da60f3a2db216a3173cd9a0943f1",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "obraz.js",
+   "size": 21053,
+   "sha256": "0e13a580e5e638c45fed61c843f93537c9364a207a72e4375b5f37aa170a270e",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "scene.js",
+   "size": 14265,
+   "sha256": "a73086b2681f173676f40588ea7487a31ed116dc77761f00b6289114017b8b5e",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "sealed/engine.wasm.gz.sealed",
+   "size": 1436271,
+   "sha256": "e2b2ac43bb4b8e2e9baa1bcc2b3eb854644a89800f99e96ba83eb6e88b700cfb",
+   "derived": true,
+   "sealed": true,
+   "note": "game code translated 68000 -> C -> WASM (Emscripten, ASYNCIFY), gzip, sealed"
+  },
+  {
+   "path": "sealed/loader.js.sealed",
+   "size": 7291,
+   "sha256": "9da89c9786e246d6e05087e4724ed9befb13522e13199542736108c14e658366",
+   "derived": true,
+   "sealed": true,
+   "note": "boot chain: Atomik depacker and HUNK relocation measured from the game, sealed"
+  },
+  {
+   "path": "sealed/seal.json",
+   "size": 592,
+   "sha256": "0e1e925f2d4d1ae5e4735c61bbdd7538886ce5f7d6ba1b67b32599599818bb02",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "shots/README.md",
+   "size": 674,
+   "sha256": "111187f2c5451397657ed389187eb8cba9a463fc0a2d7e7f68c034ca51816a8d",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "shots/about.png",
+   "size": 169415,
+   "sha256": "68732ece6e6adb279d9cc4c5da65e8d68a85277f9ea0fe1f35c1ea970b680fd7",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "shots/enhanced.png",
+   "size": 23064,
+   "sha256": "adf8e13a0758da451b5129d99a156386dca2c7b8775a45a5b48d72b911791054",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "shots/original.png",
+   "size": 19681,
+   "sha256": "15ff50359c79d85c57ae7dbabf97a5ba7bd11dd3637a5fa98c0a3e1200a7c1ea",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "wb-menu.js",
+   "size": 5685,
+   "sha256": "7d6f05350c38393074f2104e763fd9724f6b02c2c93b19b05008dd36a7a268ce",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "wb-obraz.js",
+   "size": 11815,
+   "sha256": "371219df825df98c590a6e1473338738ff2c2d8c45f8c6ed32788bf32b06bdf5",
+   "derived": false,
+   "sealed": false,
+   "note": "amiga-re-kit display contract 1.3"
+  },
+  {
+   "path": "wb-seal.js",
+   "size": 3540,
+   "sha256": "88634b48c3602c7d3ed7c030c46021a2c95a704c69bf1f40ae11e785973849cd",
+   "derived": false,
+   "sealed": false,
+   "note": "amiga-re-kit seal opener"
+  },
+  {
+   "path": "wb.css",
+   "size": 7043,
+   "sha256": "c50440530e493559ecd4f2b31d7c6989b96d8830103b48f68ebb0418d577d841",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "worker.js",
+   "size": 6198,
+   "sha256": "9293323a8d044ef4feea0d37c7a5eb21bebbe22e732ff20c222701c06d6385f4",
+   "derived": false,
+   "sealed": false
+  }
+ ]
+}

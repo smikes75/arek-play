@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alien Breed SE92 · level 1</title>
+<link rel="stylesheet" href="wb.css">
+<style>
+.game{width:879px}
+#intro b,#about b{color:var(--wb-black)}
+#intro .drop{border:2px dashed var(--wb-blue);padding:14px;margin:8px 0;text-align:center}
+#intro .drop.over{background:#dde}
+#intro .disk{margin:4px 0}
+#intro .disk.ok::before{content:"✓ ";color:#060}
+#intro .disk.bad::before{content:"✗ ";color:#a00}
+#intro .hash{font:11px/1.3 "Courier New",ui-monospace,monospace;word-break:break-all}
+#about,#help{position:absolute;left:0;right:0;top:12px;margin:0 auto;width:min(760px,calc(100% - 32px));max-height:calc(100% - 24px);overflow:auto;z-index:5;text-align:left;box-sizing:border-box}
+#about p,#about li,#help p{text-align:left}
+#about-text h2,#about-text h3,#about-text h4{padding:0 14px}
+#about h1,#about h2{margin:.6em 0 .3em}
+#about ul{margin:.3em 0 .6em 1.2em;padding:0}
+#about .foot{font-size:11px;color:#444;border-top:1px solid var(--wb-blue);padding-top:6px;margin-top:10px}
+#stage{position:relative}
+#help-button{min-width:24px}
+</style>
+</head>
+<body>
+<main id="shell" class="wbshell">
+<nav id="wbbar" aria-label="Main menu">
+<span class="wbname">Alien Breed SE92 · level 1</span>
+<div class="wbmenu">
+<button id="menu-display" class="wbtitle" type="button" aria-expanded="false" aria-controls="display-panel">Display</button>
+<div id="display-panel" class="wbpanel" aria-labelledby="menu-display" hidden>
+<div class="mode-picker" role="group" aria-label="Display mode">
+<button id="mode-original" class="wbitem" type="button" aria-pressed="false">Original</button>
+<button id="mode-enhanced" class="wbitem" type="button" aria-pressed="true">Enhanced</button>
+</div>
+<p class="wbnote">E switches. Original = the game's own 293 × 240 window and HUD, exact pixels. Enhanced = wider 448 × 256 playfield drawn from the level map, smooth motion between game frames.</p>
+<hr>
+<div class="wbrow">Size <output id="zoom-value">2×</output></div>
+<div class="zoom-buttons" role="group" aria-label="Size">
+<button type="button" data-zoom="0" aria-pressed="false">fit</button>
+<button type="button" data-zoom="1" aria-pressed="false">1×</button><button type="button" data-zoom="2" aria-pressed="true">2×</button><button type="button" data-zoom="3" aria-pressed="false">3×</button><button type="button" data-zoom="4" aria-pressed="false">4×</button><button type="button" data-zoom="6" aria-pressed="false">6×</button>
+</div>
+<label>Zoom <input id="zoom" type="range" min="0" max="6" step="0.1" value="2"></label>
+<p class="wbnote">Zoom = window width in multiples of the Original width (293 px), rounded to whole display pixels.</p>
+<hr>
+<label><input id="crt" type="checkbox" checked> CRT scanlines and RGB mask</label>
+<label>CRT detail <select id="crt-detail"><option value="fine">Fine</option><option value="standard">Medium</option><option value="strong" selected>Strong</option></select></label>
+<label>CRT shape <select id="crt-shape"><option value="lines" selected>Lines (scanlines)</option><option value="grid">Grid (squares)</option></select></label>
+<label>Blur <input id="blur" type="range" min="0" max="100" step="1" value="0"> <output id="blur-value">0 %</output></label>
+<hr>
+<button id="fullscreen" class="wbitem" type="button" data-close-menu>Fullscreen <kbd>F</kbd></button>
+</div>
+</div>
+<div id="wbstatus"><output id="status" role="status">Insert your disks to play.</output><output id="wbnotice" role="status" hidden></output></div>
+<button id="help-button" class="wbtitle" type="button" aria-label="Help (H)">?</button><span class="wbgadget" aria-hidden="true"></span>
+</nav>
+<div id="stage">
+<section id="intro" class="wbwin" aria-label="Insert disks">
+<h1 class="wbwtitle">Alien Breed Special Edition 92 · play the first level</h1>
+<p>This page runs the game's own 68000 code, translated to C and WebAssembly, from <b>your</b> disk images. It contains nothing of the game: no graphics, music, levels or code you can run without the disks.</p>
+<p>Level 1 needs <b>both disks</b>: disk 1 holds the game program, disk 2 the level files (map, tiles, aliens). Select or drop the two ADF files.</p>
+<div id="drop" class="drop">Drop disk 1 and disk 2 (ADF) here, or <label><input id="adf-input" type="file" accept=".adf,application/octet-stream" multiple> choose files</label></div>
+<div id="disk-list"></div>
+<p><label><input id="remember" type="checkbox"> Remember these disks on this device</label> <button id="forget" type="button" hidden>Forget remembered disks</button></p>
+<p id="disk-msg" role="status" class="wbnote"></p>
+<p><button id="play" class="primary" type="button" disabled>Play the first level</button></p>
+<p class="wbnote">The disks stay in your browser and are never uploaded. Arrows move, X or Ctrl fires, Space uses a terminal, E switches Original / Enhanced, M mutes, H shows help.</p>
+</section>
+<section id="help" class="wbwin" aria-label="Help" hidden>
+<h1 class="wbwtitle">Help</h1>
+<p><b>Arrows</b> move · <b>X</b> or <b>Ctrl</b> fire · <b>Space</b> (with up) at an Intex terminal opens it; arrows choose, fire confirms</p>
+<p><b>E</b> Original / Enhanced · <b>F</b> fullscreen · <b>M</b> sound on / off · <b>P</b> pause · <b>R</b> restart level 1 · <b>H</b> this help</p>
+<p>Find the keys, use the Intex terminal and reach the lift on the east side. Game over restarts level 1.</p>
+<p><button id="help-close" class="primary" type="button">Close</button></p>
+</section>
+<section id="about" class="wbwin" aria-label="About this rebuild" hidden>
+<h1 class="wbwtitle">Level 1 complete</h1>
+<div id="about-text"></div>
+<p><button id="again" class="primary" type="button">Play level 1 again</button></p>
+</section>
+<div class="game smooth" data-crt="fine" data-mode="enhanced" hidden>
+<canvas id="screen" width="879" height="816" tabindex="0" aria-label="Alien Breed level 1: arrows move, X fires."></canvas>
+<canvas class="crt-layer" aria-hidden="true"></canvas>
+</div>
+</div>
+</main>
+<script src="wb-menu.js"></script>
+<script src="wb-obraz.js"></script>
+<script src="wb-seal.js"></script>
+<script src="present.js"></script>
+<script src="render.js"></script>
+<script src="native-data.js"></script>
+<script src="native-core.js"></script>
+<script src="paula.js"></script>
+<script src="native-audio.js"></script>
+<script src="native-game.js"></script>
+</body>
+</html>

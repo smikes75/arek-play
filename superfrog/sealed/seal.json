@@ -1,0 +1,26 @@
+{
+ "seal": "arek-seal-1",
+ "files": [
+  {
+   "path": "engine.wasm.gz",
+   "iv": "2qI1SqWpoqSHbOex",
+   "size": 1436255,
+   "sha256": "f0fc9923846bb45334daca54e1ca50564a889efe0b7bc3e9afe2d951120c6386"
+  },
+  {
+   "path": "loader.js",
+   "iv": "mPEa0Nsj0dB1haDU",
+   "size": 7275,
+   "sha256": "c77afb8353afa9de44e8557a5f772f6f68baa622e2b2d350f43cbe3b5287ff56"
+  }
+ ],
+ "keys": [
+  {
+   "disks": [
+    "3484059b87a40da5a297b3926470c6843120094d4e5154a871d4f57a8c126768"
+   ],
+   "iv": "AM+Nl6wYRxLfUoT0",
+   "wrapped": "JVWYojDf5qIttnKWmp1XE+ITv7Q8KFbwmkzQb70kbZybn2K+tco7tmoIBjokwQMT"
+  }
+ ]
+}

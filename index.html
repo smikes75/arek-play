@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>arek play</title>
+<style>
+  :root { --bg: #0f1116; --ink: #e8e6df; --dim: #9a978e; --blue: #4aa3ff; --line: #262a33; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.5 system-ui, -apple-system, Segoe UI, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 48px 16px 64px; }
+  h1 { font-size: 2rem; margin: 0 0 4px; } .sub { color: var(--dim); margin: 0 0 32px; }
+  .game { border-top: 1px solid var(--line); padding: 20px 0; display: grid; grid-template-columns: 1fr auto; gap: 12px 24px; align-items: center; }
+  .game h2 { font-size: 1.15rem; margin: 0 0 4px; } .game p { margin: 0; color: var(--dim); }
+  a.play { display: inline-block; padding: 10px 18px; border: 1px solid var(--blue); border-radius: 6px; color: var(--blue); text-decoration: none; white-space: nowrap; }
+  a.play:hover { background: var(--blue); color: var(--bg); } .soon { color: var(--dim); white-space: nowrap; }
+  .note { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; color: var(--dim); font-size: .95rem; }
+  .note a { color: var(--blue); }
+</style>
+</head>
+<body>
+<main>
+  <h1>arek play</h1>
+  <p class="sub">First levels of Amiga games, rebuilt with <a href="https://smikes75.github.io/amiga-re-kit/" style="color:var(--blue)">amiga-re-kit</a>. Bring your own disk image.</p>
+  <div class="game"><div><h2>Superfrog</h2><p>Team17, 1993 · level 1, Magic Woods · needs disk 1</p></div><a class="play" href="superfrog/">Play level 1</a></div>
+  <div class="game"><div><h2>Alien Breed Special Edition 92</h2><p>Team17, 1992 · level 1 · needs disks 1 and 2</p></div><a class="play" href="alienbreed/">Play level 1</a></div>
+  <div class="game"><div><h2>Turrican II</h2><p>Factor 5 / Rainbow Arts, 1991 · world 1-1 · needs disk 1</p></div><span class="soon">coming</span></div>
+  <p class="note">Nothing from the games is hosted here. The pages load your disk image in the browser and verify it; it is never uploaded.
+  The games' own code, translated to WebAssembly, is sealed and opens only with the original disk.
+  There is no CPU interpreter and no Kickstart. Each game's <em>About</em> screen tells how it was built.
+  Original games © their rights holders. <a href="https://github.com/smikes75/arek-play">Source and details</a>.</p>
+</main>
+</body>
+</html>

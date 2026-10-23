@@ -1,0 +1,181 @@
+{
+ "game": "Alien Breed Special Edition 92",
+ "level": 1,
+ "accepted_disks": [
+  {
+   "name": "Alien Breed Special Edition 92 (Team17, 1992), 2-disk Fairlight release",
+   "disks": [
+    {
+     "file": "alien-breed-se92-1.adf",
+     "sha256": "af8ef14cf9729d9d41ec5a6705c4b4342ae9844db33ea5bb6cd91ff39a3175b6",
+     "bytes": 901120
+    },
+    {
+     "file": "alien-breed-se92-2.adf",
+     "sha256": "4b782994d649132d1d03c66d84f708ad42fecaf5e49dd5e28e646d2e51626961",
+     "bytes": 901120
+    }
+   ]
+  }
+ ],
+ "core": {
+  "wasm_bytes": 9646531,
+  "wasm_gzip_bytes": 1193756,
+  "build": "emcc -Oz, ASYNCIFY, TRACEPC without COVER/BRK diagnostics (tools/build-present.py)",
+  "web_core_wasm_bytes": 22119002
+ },
+ "total_bytes": 1701143,
+ "files": [
+  {
+   "path": "ABOUT.md",
+   "bytes": 1987,
+   "sha256": "cb8ffb878fb820dfde246da3b3de64da25ee5f623e58135e9b7639e2db98cd2e",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "disks.json",
+   "bytes": 412,
+   "sha256": "996ad461876d24f98435c230dab086e3ec8698898b52691ede0d8f49f0431c46",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "index.html",
+   "bytes": 6455,
+   "sha256": "e2188050af974ec8c5ef2db3ed2c8af282c822006fd195b4963627d40984edf0",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "native-audio-worklet.js",
+   "bytes": 2377,
+   "sha256": "a3d9e1003db9a2b4ef6525a17363a0b7c28f9141ec168536901de69ec820a9c6",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "native-audio.js",
+   "bytes": 6283,
+   "sha256": "2958cc4a880e6eeccd583b70cde118d623c4612d8c08a30e69e1e249aa03e527",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "native-core.js",
+   "bytes": 18898,
+   "sha256": "4fabab2fcba7d0e611dee34ea56f6979ffb2d9d147d6a6378629bf2b6403a62d",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "native-data.js",
+   "bytes": 15050,
+   "sha256": "bf9bb888c92868a3f583075c6a8088db843bed70fc8f47963a48297b704f8e6b",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "native-game.js",
+   "bytes": 76396,
+   "sha256": "24e829b8809f8f56bc221c3a661817c8aeb626d552edf5403bd36baadeac9434",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "paula.js",
+   "bytes": 7320,
+   "sha256": "c0992a0b6d9d8e78268ae8880897c292e4f6369b7822899b78a887040657a9e2",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "present.js",
+   "bytes": 9613,
+   "sha256": "f107526efc5d51f6a6d102b6f1e728907795ad0f3ea6951061c5a8cc25c037c0",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "render.js",
+   "bytes": 38969,
+   "sha256": "2f3ee1689b71b993bf422cd6180099d41f169818713ac08580103b50a375156a",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "sealed/native-core.wasm.sealed",
+   "bytes": 1193772,
+   "sha256": "39fb3cd416b5c6231218bb3fa18ad187bc5227bc5bb58699b48095a0040b02f0",
+   "derived": true,
+   "sealed": true,
+   "plain": "native-core.wasm, 9646531 B (sealed with --gzip)"
+  },
+  {
+   "path": "sealed/seal.json",
+   "bytes": 584,
+   "sha256": "7c4e0173bfc49a69a6073fffe810305698b63611dbba4bdeb6d5bb49a0022780",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "shots/README.md",
+   "bytes": 576,
+   "sha256": "8b16c5709cf9ccfa84d0ac1a7017cb6cd55675d95165dce881b1f9f06f2680fd",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "shots/about.png",
+   "bytes": 178725,
+   "sha256": "b764112e1953897aa2680e411e6d2195c02bb0bb4c87543d9b5257ee02940070",
+   "derived": false,
+   "sealed": false,
+   "screenshot": true
+  },
+  {
+   "path": "shots/enhanced.png",
+   "bytes": 71383,
+   "sha256": "4227f2b136e459595432a02752ddf21992d45ae6e95c488ecbd30578e529cccd",
+   "derived": false,
+   "sealed": false,
+   "screenshot": true
+  },
+  {
+   "path": "shots/original.png",
+   "bytes": 43927,
+   "sha256": "dce16dde24cd59f278f86b8822260c42cf2e7d1e58cd2443f3f97941c1c080a8",
+   "derived": false,
+   "sealed": false,
+   "screenshot": true
+  },
+  {
+   "path": "wb-menu.js",
+   "bytes": 5627,
+   "sha256": "ec1c3eb5c6dd9cfda8d497ba55aadcf83823d307bd1fe8777a010ea2238f6a7b",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "wb-obraz.js",
+   "bytes": 11815,
+   "sha256": "371219df825df98c590a6e1473338738ff2c2d8c45f8c6ed32788bf32b06bdf5",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "wb-seal.js",
+   "bytes": 3927,
+   "sha256": "f70cfbde38d55233f79988f4b3afa6187358f939eb39250882dc8e3f57f97fa4",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "wb.css",
+   "bytes": 7047,
+   "sha256": "e3ae697dbceb86bd65ceed3e45ef6794a15c595fc0ddb5e9a563f7083b0e9da5",
+   "derived": false,
+   "sealed": false
+  }
+ ]
+}
