@@ -87,7 +87,8 @@
     let aboutHtml = null;   // promise textu (jedno stazeni)
     async function showAbout() {
         if (!aboutHtml) aboutHtml = fetch('ABOUT.md').then((r) => r.text()).then(md).catch(() => '<p>Level 1 complete.</p>');
-        $('about-text').innerHTML = await aboutHtml; $('help').hidden = true; $('about').hidden = false; $('about').scrollTop = 0; $('again').focus({ preventScroll: true });
+        $('help').hidden = true; $('about').hidden = false; $('again').focus({ preventScroll: true });   // okno hned, text po stazeni (na webu chvili trva)
+        $('about-text').innerHTML = await aboutHtml; $('about').scrollTop = 0;
         $('status').textContent = 'Level 1 complete.';
     }
     function toggleHelp(show) { const h = $('help'); h.hidden = show === undefined ? !h.hidden : !show; if (!h.hidden) $('help-close').focus(); else $('screen').focus(); }
