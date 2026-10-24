@@ -161,16 +161,19 @@ $('again').addEventListener('click', () => { restart(); $('screen').focus({ prev
 async function showAbout() {
   if (!$('about-text').innerHTML) {
     const md = await (await fetch('ABOUT.md')).text();
-    const inl = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>').replace(/`(.+?)`/g, '<code>$1</code>').replace(/\[(.+?)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-    let html = '', list = false;
+    const inl = s => esc(s).replace(/!\[(.+?)\]\(([\w.-]+)\)/g, '<img src="$2" alt="$1">').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>').replace(/`(.+?)`/g, '<code>$1</code>').replace(/\[(.+?)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    // <!-- pinned -->: následující sekce (podpora + QR) je pod rolovaným textem, vidět bez rolování
+    const out = { text: '', pin: '' }; let to = 'text', pinNext = false;
     for (const block of md.split(/\n\s*\n/)) {
       const lines = block.trim().split('\n'); if (!lines[0]) continue;
+      if (lines[0] === '<!-- pinned -->') { pinNext = true; continue; }
       if (/^# /.test(lines[0])) continue;                       // titulek okna je v HTML
-      if (/^## /.test(lines[0])) { html += `<h2>${inl(lines[0].slice(3))}</h2>`; lines.shift(); if (!lines.length) continue; }
-      if (lines.every(l => /^[-*] /.test(l))) html += '<ul>' + lines.map(l => `<li>${inl(l.slice(2))}</li>`).join('') + '</ul>';
-      else html += `<p${/^_/.test(lines[0]) ? ' class="foot"' : ''}>${inl(lines.join(' ').replace(/^_|_$/g, ''))}</p>`;
+      if (/^## /.test(lines[0])) { to = pinNext ? 'pin' : 'text'; pinNext = false; out[to] += `<h2>${inl(lines[0].slice(3))}</h2>`; lines.shift(); if (!lines.length) continue; }
+      if (lines.every(l => /^[-*] /.test(l))) out[to] += '<ul>' + lines.map(l => `<li>${inl(l.slice(2))}</li>`).join('') + '</ul>';
+      else if (/^!\[/.test(lines[0])) out[to] += inl(lines[0]);
+      else out[to] += `<p${/^_/.test(lines[0]) ? ' class="foot"' : ''}>${inl(lines.join(' ').replace(/^_|_$/g, ''))}</p>`;
     }
-    $('about-text').innerHTML = html;
+    $('about-text').innerHTML = out.text; $('about-pin').innerHTML = out.pin ? `<div>${out.pin.replace(/<img[^>]*>/, '')}</div>${(out.pin.match(/<img[^>]*>/) || [''])[0]}` : ''; $('about-pin').hidden = !out.pin;
   }
   $('about').hidden = false; sendCtl(); $('again').focus();
 }

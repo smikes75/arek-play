@@ -1,7 +1,7 @@
 {
  "game": "Superfrog (Team17, 1993), level 1 Magic Woods",
  "kit": "amiga-re-kit 0.5.11",
- "total_bytes": 3325211,
+ "total_bytes": 3356694,
  "accepted_disks": [
   {
    "disks": [
@@ -13,8 +13,8 @@
  "files": [
   {
    "path": "ABOUT.md",
-   "size": 2101,
-   "sha256": "3a2df969555d8eb13195483e590c77a7e02011550da62de0eba8959ce43336f2",
+   "size": 2483,
+   "sha256": "b72c2b348111f159dd30815eb1db68ed763e7130765bb8016caf98fcc5f74ad6",
    "derived": false,
    "sealed": false
   },
@@ -35,15 +35,15 @@
   },
   {
    "path": "index.html",
-   "size": 6467,
-   "sha256": "12387299fb57a0086b7e14667b11bc7a580921115fefe125b4442705982c32fb",
+   "size": 6946,
+   "sha256": "4c7ebea62a653e58c507ef27898b5f5c8a52a2a5482c4e6aeb2dbe5fccf47901",
    "derived": false,
    "sealed": false
   },
   {
    "path": "main.js",
-   "size": 16374,
-   "sha256": "e70d5ff91524a67e39bb3e3c017ecdca2d1fa0206fdd883c3460271569e6712d",
+   "size": 16952,
+   "sha256": "0447095f0896e642ba6701c52b824a7318c3a4e6f82c3e56c7827a325a928b04",
    "derived": false,
    "sealed": false
   },
@@ -64,7 +64,7 @@
   {
    "path": "sealed/engine.wasm.sealed",
    "size": 2995739,
-   "sha256": "7518dfaa5327aaed596d1685010500ad3074b3f075f2bd5c583ee63058027827",
+   "sha256": "da756e23e3593637993595cb370f59bc7f99b3e1171ae1f7084233877c28d4f4",
    "derived": true,
    "sealed": true,
    "note": "game code translated 68000 -> C -> WASM (Emscripten, ASYNCIFY), sealed with --gzip"
@@ -72,7 +72,7 @@
   {
    "path": "sealed/loader.js.sealed",
    "size": 3035,
-   "sha256": "7bb9c25273db78431b4e4c9961408d3528fe29dfbef58db281938e3924d243cd",
+   "sha256": "cffd98e086f03aa5b7e5e2bf2f8f440d437a1c38eaeb6d53620c5237cd2d7e29",
    "derived": true,
    "sealed": true,
    "note": "boot chain: Atomik depacker and HUNK relocation measured from the game, sealed"
@@ -80,7 +80,7 @@
   {
    "path": "sealed/seal.json",
    "size": 739,
-   "sha256": "0271d3f7a6a050efc87d084497caddca5e4df0291be0c81cc225805e0c574d91",
+   "sha256": "4c2eb1b57dca1e0203f318819275468bb556f28123e5486d9ad85a6e3c65fed0",
    "derived": false,
    "sealed": false
   },
@@ -93,24 +93,32 @@
   },
   {
    "path": "shots/about.png",
-   "size": 168203,
-   "sha256": "27c2168fbf536dc15873f79d383ffaf5f252a326273c865011ac77c4f0c14d90",
+   "size": 196192,
+   "sha256": "38d34c2fafb747be89c1f8c35c872a61b8ca0d4f7262161dd636b7c03984fa4f",
    "derived": false,
    "sealed": false
   },
   {
    "path": "shots/enhanced.png",
    "size": 23262,
-   "sha256": "63cc5fc0df7dc05217e53bf801f4aea384f6950497af6e4735f42953c6c4e8f0",
+   "sha256": "c4d5b9edb9a08663c7233ff8121b96e511065d9cf756bba6dbf83a7c6b8a1dc3",
    "derived": false,
    "sealed": false
   },
   {
    "path": "shots/original.png",
-   "size": 18454,
-   "sha256": "13545104bd0a3765b1782f924ea65ecf382eae0515d62b63c8cba485ec86ee7b",
+   "size": 18451,
+   "sha256": "14789d9c4534a31ba6bfa5c91a06966dcb59f6e4bc7be8077ff68279754d0e43",
    "derived": false,
    "sealed": false
+  },
+  {
+   "path": "support-qr.svg",
+   "size": 2058,
+   "sha256": "41bada59c244b1449f72eb3227de3eb0e04ad9a372b5755f6fcf5e8e7aa8d8e8",
+   "derived": false,
+   "sealed": false,
+   "note": "QR code of the Revolut.me support link in ABOUT.md (from amiga-re-kit docs/img, not derived from the game)"
   },
   {
    "path": "wb-menu.js",

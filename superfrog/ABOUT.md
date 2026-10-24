@@ -24,6 +24,14 @@ There is no CPU interpreter and no Kickstart: the game's own 68000 code was tran
 
 Built in about two days (22 to 23 October 2026) by Claude (Anthropic: Sonnet 5.5, then Opus 5.5). The tools were [amiga-re-kit](https://github.com/smikes75/amiga-re-kit) (`arek`: disk and code analysis, the 68000 to C translator and checks against a headless emulator), Emscripten and a browser. Only one disk version has been verified so far: `spfrogd1.adf` (a Crystal crack of disk 1).
 
+<!-- pinned -->
+
+## Like AREK? Support the project's next steps
+
+AREK is free and stays free. Every five euros goes into the next piece of it: more packers, a better recompiler, more tests, more games. Pay through Revolut.me (Revolut, card or Apple Pay): [revolut.me/stepan2vpo](https://revolut.me/stepan2vpo?amount=500&currency=EUR)
+
+![QR code: Revolut.me, 5 €](support-qr.svg)
+
 ## Links
 
 - [amiga-re-kit on the web](https://smikes75.github.io/amiga-re-kit/)

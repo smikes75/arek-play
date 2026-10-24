@@ -25,6 +25,11 @@
 #about h2{font-size:1em;margin:12px 14px 4px;text-align:left}
 #about ul{margin:4px 14px 4px 30px;padding:0}
 #about .foot{font-size:11px;opacity:.8}
+#about .wbwin{display:flex;flex-direction:column;overflow:hidden}
+#about-text{flex:1 1 auto;min-height:0;overflow:auto}
+#about-pin{flex:none;display:flex;align-items:center;gap:12px;padding:0 14px 0 0;border-top:2px solid var(--wb-blue)}
+#about-pin>div{flex:1;min-width:0}#about-pin a{word-break:break-all}#about-pin img{width:150px;height:150px;flex:none;margin:8px 0}
+@media(max-width:480px){#about-pin{flex-direction:column;padding:0 0 4px}}
 #loading{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font:bold 16px/1.4 Topaz,"Courier New",monospace;background:#000}
 #loading[hidden]{display:none}
 .unknown{color:#a02000;word-break:break-all}
@@ -98,6 +103,7 @@ code{word-break:break-all}
 <section class="wbwin" aria-label="About this project">
 <h1 class="wbwtitle">About this rebuild</h1>
 <div id="about-text"></div>
+<div id="about-pin" hidden></div>
 <p><button id="again" class="primary" type="button">Play level 1 again</button></p>
 </section>
 </div>
