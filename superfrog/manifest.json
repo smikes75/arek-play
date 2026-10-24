@@ -1,7 +1,7 @@
 {
  "game": "Superfrog (Team17, 1993), level 1 Magic Woods",
  "kit": "amiga-re-kit 0.5.11",
- "total_bytes": 3326171,
+ "total_bytes": 3325211,
  "accepted_disks": [
   {
    "disks": [
@@ -42,8 +42,8 @@
   },
   {
    "path": "main.js",
-   "size": 16020,
-   "sha256": "1c0df75dcbd2f038c9a6cc0818495291c4363ddab9095bf8ee79b5d1cf0874de",
+   "size": 16374,
+   "sha256": "e70d5ff91524a67e39bb3e3c017ecdca2d1fa0206fdd883c3460271569e6712d",
    "derived": false,
    "sealed": false
   },
@@ -86,8 +86,8 @@
   },
   {
    "path": "shots/README.md",
-   "size": 674,
-   "sha256": "111187f2c5451397657ed389187eb8cba9a463fc0a2d7e7f68c034ca51816a8d",
+   "size": 792,
+   "sha256": "27d27dacd738a52c59f2677ad7a70aecb404e67c2a1412d1cca87c46eb83ef09",
    "derived": false,
    "sealed": false
   },
@@ -100,15 +100,15 @@
   },
   {
    "path": "shots/enhanced.png",
-   "size": 23467,
-   "sha256": "1a404bbb8e5d73d3aa08bce6c673bca65efe71fcfaa77bef39ffc574a3831f13",
+   "size": 23262,
+   "sha256": "63cc5fc0df7dc05217e53bf801f4aea384f6950497af6e4735f42953c6c4e8f0",
    "derived": false,
    "sealed": false
   },
   {
    "path": "shots/original.png",
-   "size": 19681,
-   "sha256": "15ff50359c79d85c57ae7dbabf97a5ba7bd11dd3637a5fa98c0a3e1200a7c1ea",
+   "size": 18454,
+   "sha256": "13545104bd0a3765b1782f924ea65ecf382eae0515d62b63c8cba485ec86ee7b",
    "derived": false,
    "sealed": false
   },

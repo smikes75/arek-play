@@ -27,7 +27,10 @@ const ctl = new Int32Array(16);
 const frame = new Uint8Array(W * H * 3), enhFrame = new Uint8Array((336 + 2 * ENH_MX) * (262 + 32) * 3);
 const sceneBuf = new ArrayBuffer(PK_SIZE * SLOTS), mapBuf = new ArrayBuffer(MAP_BYTES), sceneU8 = new Uint8Array(sceneBuf), mapU8 = new Uint8Array(mapBuf);
 disp.scene = new SceneRenderer(sceneBuf, mapBuf, ctl);
-window.presentTest = { ctl, play(text) { window.__play = text.split('\n'); }, about: () => showAbout() };   // testy (present/TESTS.md): čítač snímků ctl[0], přehrání záznamu od začátku levelu
+// testy (present/TESTS.md): čítač snímků ctl[0], přehrání záznamu od začátku levelu
+window.presentTest = { ctl, play(text) { window.__play = text.split('\n'); }, about: () => showAbout(),
+  smooth(on) { disp.cfg.enhanced.smooth = on; },   // snímky do galerie: Vylepšeno bez mezipoloh = přesně snímek hry
+  redraw() { const ew = disp.wideHud() && ctl[6] === ENH_MX; disp.hudWide = ew; disp.present(frame, ew ? enhFrame : null); } };   // po pauze (P): poslední snímek znovu v aktuálním režimu (Originál i Vylepšeno ze stejného tiku)
 
 let disk = null, diskName = '', box = null, manifest = null, running = false, worker = null, menuPause = false, manualPause = false, muted = false;
 const shell = new WbMenu.Shell($('shell'), {
