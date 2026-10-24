@@ -14,7 +14,7 @@ There is no CPU interpreter and no Kickstart: the game's own 68000 code was tran
 
 ## Who and how
 
-Claude (Anthropic, Claude Opus 5.5) in Claude Code over four days (20–23 October 2026). Tools: the amiga-re-kit (`arek`) for disk, unpacking, disassembly and recompilation, the headless vAmiga emulator as the measured reference, Emscripten for WebAssembly.
+Claude (Anthropic, Claude Opus 5.5) in Claude Code, over four days (20–23 October 2026). Tools: the amiga-re-kit (`arek`) for disk, unpacking, disassembly and recompilation, the headless vAmiga emulator as the measured reference, Emscripten for WebAssembly.
 
 ## Enhanced mode
 

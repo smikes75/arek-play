@@ -24,12 +24,12 @@
   "build": "emcc -Oz, ASYNCIFY, TRACEPC without COVER/BRK diagnostics (tools/build-present.py)",
   "web_core_wasm_bytes": 22119002
  },
- "total_bytes": 1701205,
+ "total_bytes": 1699140,
  "files": [
   {
    "path": "ABOUT.md",
-   "bytes": 1987,
-   "sha256": "e5f1aa462f2f401cac2b0d70cadfd74115bc40f39967d6d279a78460f1cde626",
+   "bytes": 1964,
+   "sha256": "f0f533ab958a5cacbb1db392b1d5897b9597a9dab88686409f9e8544454f2bae",
    "derived": false,
    "sealed": false
   },
@@ -106,7 +106,7 @@
   {
    "path": "sealed/native-core.wasm.sealed",
    "bytes": 1193772,
-   "sha256": "5932c59da7ce9e2eed9623f2375a09f90d54b86ed609ad8ac77b385b2f699d9d",
+   "sha256": "fd275699faca928c2e088b0c0f0b5e095f1b50b1d5d8a9d12601b6cb53785bef",
    "derived": true,
    "sealed": true,
    "plain": "native-core.wasm, 9646531 B (sealed with --gzip)"
@@ -114,7 +114,7 @@
   {
    "path": "sealed/seal.json",
    "bytes": 584,
-   "sha256": "3901c86c5d9a54305289480ff919794318d5752adad35a1c8086846d7a1a8d3b",
+   "sha256": "c4063bb84caad96ffe20245e57cfc23e9e4c1c84f6f198d969f0d5fb02af942a",
    "derived": false,
    "sealed": false
   },
@@ -127,8 +127,8 @@
   },
   {
    "path": "shots/about.png",
-   "bytes": 178725,
-   "sha256": "b764112e1953897aa2680e411e6d2195c02bb0bb4c87543d9b5257ee02940070",
+   "bytes": 176544,
+   "sha256": "70f19c682e5696c0f80ad213e513005e70408899788b53a23851d3a178327b07",
    "derived": false,
    "sealed": false,
    "screenshot": true
@@ -158,8 +158,8 @@
   },
   {
    "path": "wb-obraz.js",
-   "bytes": 11815,
-   "sha256": "371219df825df98c590a6e1473338738ff2c2d8c45f8c6ed32788bf32b06bdf5",
+   "bytes": 11954,
+   "sha256": "9eda0e23f6e5f21e4af82db90d501230de416ddedbbe23a1de7fa01a715f66ba",
    "derived": false,
    "sealed": false
   },
