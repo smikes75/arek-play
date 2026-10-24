@@ -1,6 +1,6 @@
 // present.js - prezentacni verze levelu 1 pro web kitu (amiga-re-kit PREZENTACE-WEB.md, docs/PRESENT.md): diskety vlozi navstevnik
-// (overeni otiskem proti sealed/seal.json, nazvy v disks.json), jadro native-core.wasm je zapecetene (WBSEAL, klic z obsahu obou
-// disket) a komprimovane (arek web seal --gzip: sifrovany soubor uz server nezkomprimuje). Konec levelu 1 (obrazovka mezi levely)
+// (sada disket podle otisku v sealed/seal.json, nazvy v disks.json; jina verze disket podle obsahu hry: NATIVE_DATA.payload,
+// arek 0.5.12), jadro native-core.wasm je zapecetene (WBSEAL, klic z obou disket nebo z obsahu hry) a komprimovane (arek web seal --gzip: sifrovany soubor uz server nezkomprimuje). Konec levelu 1 (obrazovka mezi levely)
 // = obrazovka o projektu z ABOUT.md; H napoveda, M zvuk. native-game.js cte window.AB_PRESENT.
 'use strict';
 (() => {
@@ -11,20 +11,31 @@
     const disksReady = new Promise((r) => { resolveDisks = r; });
     const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const msg = (html) => { $('disk-msg').innerHTML = html; };
+    const ISSUES = 'https://github.com/smikes75/arek-play/issues';
+    const domReady = new Promise((r) => { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', r); else r(); });   // NATIVE_DATA (skript za timto)
 
     // ---- prijimane diskety: sha256 z seal.json (keys[].disks), nazvy z disks.json ----
     function knownList() {
-        return versions.map((v) => '<li>' + esc(v.name) + '<br>' + v.disks.map((d, i) => esc(SLOTS[i]) + ': <span class="hash">' + d.sha256 + '</span>').join('<br>') + '</li>').join('');
+        return versions.map((v) => '<li>' + esc(v.name) + '<br>' + (v.disks ? v.disks.map((d, i) => esc(SLOTS[i]) + ': <span class="hash">' + d.sha256 + '</span>').join('<br>')
+            : 'game content id: <span class="hash">' + esc(v.payload) + '</span>') + '</li>').join('');
     }
-    function slotOf(h) { for (const k of manifest.keys) { const i = k.disks.indexOf(h); if (i >= 0) return i; } return -1; }
+    function slotOf(h) { for (const k of manifest.keys) { const i = (k.disks || []).indexOf(h); if (i >= 0) return i; } return -1; }
+    // jina verze disket: ktera disketa to je podle souboru hry (disk 1 = program PARTF, disk 2 = mapa levelu 1 L0MA)
+    async function slotByFiles(bytes) {
+        await domReady;
+        try { const names = NATIVE_DATA.rootEntries(bytes).map((e) => e.name); return names.includes('PARTF') ? 0 : names.includes('L0MA') ? 1 : -1; } catch (e) { return -1; }
+    }
+    const notAccepted = (rows) => 'Hashes: <span class="hash">' + rows.join('<br>') + '</span><br>This version is not accepted yet. You can report the hashes in the ' +
+        '<a href="' + ISSUES + '" target="_blank" rel="noopener">arek-play issues</a>. Accepted versions:<ul>' + knownList() + '</ul>';
     function render() {
         $('disk-list').innerHTML = SLOTS.map((name, i) => '<div class="disk ' + (disks[i] ? 'ok' : '') + '">' + esc(name[0].toUpperCase() + name.slice(1)) + ': ' + (disks[i] ? 'loaded' : 'missing') + '</div>').join('');
     }
     async function addDisk(bytes, label) {
         if (bytes.length !== ADF_SIZE) { msg('<b>' + esc(label) + '</b> is not an ADF disk image (' + bytes.length + ' bytes, an ADF has ' + ADF_SIZE + ').'); return false; }
-        const [h] = await WBSEAL.ids([bytes]), i = slotOf(h);
+        const [h] = await WBSEAL.ids([bytes]); let i = slotOf(h);
+        if (i < 0) i = await slotByFiles(bytes);   // jina verze: overi se az obsahem hry obou disket (tryOpen)
         if (i < 0) {
-            msg('<b>' + esc(label) + '</b> is a version this page does not know (sha256 <span class="hash">' + h + '</span>). Accepted versions:<ul>' + knownList() + '</ul>');
+            msg('<b>' + esc(label) + '</b> is not an Alien Breed SE92 disk this page can read (no game program PARTF or level map L0MA on it). ' + notAccepted(['sha256 ' + h]));
             return false;
         }
         disks[i] = bytes; hashes[i] = h; render();
@@ -33,9 +44,17 @@
     async function tryOpen() {
         $('play').disabled = true;
         if (!disks[0] || !disks[1]) { msg(!disks[0] ? 'Now add disk 1: it holds the game program.' : 'Now add disk 2: level 1 loads its map, tiles and aliens from it.'); return; }
-        try { box = await WBSEAL.open(manifest, [disks[0], disks[1]]); }
-        catch (e) { msg('These two disks are not a set this page knows (' + esc(e.message) + '). Accepted versions:<ul>' + knownList() + '</ul>'); return; }
-        msg('Both disks verified.'); $('play').disabled = false;
+        let payload = null, missing = '';
+        await domReady;
+        try { payload = NATIVE_DATA.payload(disks[0], disks[1]); } catch (e) { missing = e.file || e.message; }
+        try { box = await WBSEAL.open(manifest, [disks[0], disks[1]], payload ? { payload } : undefined); }
+        catch (e) {
+            const rows = ['disk 1 sha256 ' + hashes[0], 'disk 2 sha256 ' + hashes[1]];
+            if (payload) rows.push('game content id ' + await WBSEAL.payloadId(payload));
+            msg('These two disks do not open the game' + (missing ? ' (game file ' + esc(missing) + ' is missing or damaged)' : '') + '. ' + notAccepted(rows));
+            return;
+        }
+        msg(box.key.payload ? 'Both disks verified by their game files (' + esc(box.label || 'another version') + ').' : 'Both disks verified.'); $('play').disabled = false;
         if ($('remember').checked) await remember(true);
     }
     async function addFiles(files) {
@@ -105,6 +124,7 @@
     const TR = [
         [/^Vylepšeno/, 'Enhanced: wider playfield, smooth motion'], [/^Originál/, "Original: the game's own window"],
         [/^Pauza$/, 'Paused (P)'], [/^Pokračuje$/, 'Running'], [/^Zvuk zapnut$/, 'Sound on (M)'], [/^Zvuk vypnut$/, 'Sound off (M)'],
+        [/^Jas, kontrast a sytost 100 %$/, 'Brightness, contrast and colour 100 %'],
         [/^Level 1 od začátku/, 'Level 1 from the start'], [/^Hra od začátku/, 'Level 1 from the start'],
         [/^Chyba překladu/, 'Internal error of the translated code - press R to restart level 1'], [/^Jas, kontrast/, 'Monitor reset'],
     ];
@@ -134,7 +154,7 @@
     $('help-button').addEventListener('click', () => toggleHelp());
     $('help-close').addEventListener('click', () => toggleHelp(false));
     document.addEventListener('keydown', (e) => { if (e.code === 'Escape' && !$('help').hidden) toggleHelp(false); });
-    window.abPresent = { addDisk: async (bytes, label) => { const ok = await addDisk(bytes, label || 'disk'); await tryOpen(); return ok; }, ready: () => !$('play').disabled, showAbout };   // testy (Playwright)
+    window.abPresent = { addDisk: async (bytes, label) => { const ok = await addDisk(bytes, label || 'disk'); await tryOpen(); return ok; }, ready: () => !$('play').disabled, showAbout, key: () => box && box.key };   // testy (Playwright)
 
     (async () => {
         try {

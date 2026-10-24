@@ -16,6 +16,11 @@
      "bytes": 901120
     }
    ]
+  },
+  {
+   "name": "any disks with the same game files",
+   "payload": "a3350ba053fe8a81591a6ba708e803c0f2f0190383a72add076e7b59720bc4c7",
+   "bytes": 827897
   }
  ],
  "core": {
@@ -24,7 +29,7 @@
   "build": "emcc -Oz, ASYNCIFY, TRACEPC without COVER/BRK diagnostics (tools/build-present.py)",
   "web_core_wasm_bytes": 22119002
  },
- "total_bytes": 1744430,
+ "total_bytes": 1751062,
  "files": [
   {
    "path": "ABOUT.md",
@@ -35,15 +40,15 @@
   },
   {
    "path": "disks.json",
-   "bytes": 412,
-   "sha256": "996ad461876d24f98435c230dab086e3ec8698898b52691ede0d8f49f0431c46",
+   "bytes": 566,
+   "sha256": "d2cfa24887ea3f75df5bf8d9453a7774a42cb5e85a37085d0980ad3baf3edb91",
    "derived": false,
    "sealed": false
   },
   {
    "path": "index.html",
-   "bytes": 7056,
-   "sha256": "d3211f843baff9b389d2eaae0d09aa26ce751ba57e73a7205b5b4ded1d11f6a8",
+   "bytes": 8360,
+   "sha256": "a481b82f0b8661457121614aeaa2032cdef2fad8fd640f34f9a5fb8513cff59b",
    "derived": false,
    "sealed": false
   },
@@ -70,8 +75,8 @@
   },
   {
    "path": "native-data.js",
-   "bytes": 15050,
-   "sha256": "bf9bb888c92868a3f583075c6a8088db843bed70fc8f47963a48297b704f8e6b",
+   "bytes": 16546,
+   "sha256": "81c9665be8006d9a1c05d23d663dbe700e1788d92f444379a1004875fffc91a8",
    "derived": false,
    "sealed": false
   },
@@ -91,8 +96,8 @@
   },
   {
    "path": "present.js",
-   "bytes": 10409,
-   "sha256": "b8cc64df794ae18f00e42acb420562f0de6a0a3d5b1690e1e539b40634b5d287",
+   "bytes": 12296,
+   "sha256": "26988fd2a544077f81a4a80c69f53dd3fc316da8b7eb7b71917d866adbd0a402",
    "derived": false,
    "sealed": false
   },
@@ -106,15 +111,15 @@
   {
    "path": "sealed/native-core.wasm.sealed",
    "bytes": 1193772,
-   "sha256": "a1d5174475c9460849de73dcfdb777a47f8312052770e5b3688b6d04b0e22a3d",
+   "sha256": "8ea702fe795e1518bf42fe0eaee5072bb2140e5787fcefee63c0563b22f877b4",
    "derived": true,
    "sealed": true,
    "plain": "native-core.wasm, 9646531 B (sealed with --gzip)"
   },
   {
    "path": "sealed/seal.json",
-   "bytes": 584,
-   "sha256": "f6d452afc65ab377710d86235490f7bca9e37cb7fd8f99f0668a657bde762c75",
+   "bytes": 835,
+   "sha256": "cb972b2d6af7530c52ed0aa1be0136c14b4ab22cc9b81dfb2c3faba90b0af142",
    "derived": false,
    "sealed": false
   },
@@ -172,8 +177,8 @@
   },
   {
    "path": "wb-seal.js",
-   "bytes": 3927,
-   "sha256": "f70cfbde38d55233f79988f4b3afa6187358f939eb39250882dc8e3f57f97fa4",
+   "bytes": 5467,
+   "sha256": "519f83ff16fbd7f3048df3154da5c5d0912058e66f7112fd15f592be905d1912",
    "derived": false,
    "sealed": false
   },

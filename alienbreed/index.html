@@ -32,6 +32,9 @@
 }
 #about .foot{font-size:11px;color:#444;border-top:1px solid var(--wb-blue);padding-top:6px;margin-top:10px}
 #stage{position:relative}
+#keys{flex:none;margin:0;padding:4px 12px 8px;text-align:center;line-height:1.9;color:var(--wb-white,#fff)}
+#keys kbd{float:none;display:inline-block;min-width:1.4em;padding:0 4px;margin:0 1px;border:1px solid var(--wb-blue);background:#fff;color:var(--wb-black);font:inherit;line-height:1.5;text-align:center}
+#stage:has(.game[hidden])+#keys{display:none}
 #help-button{min-width:24px}
 </style>
 </head>
@@ -60,6 +63,13 @@
 <label>CRT detail <select id="crt-detail"><option value="fine">Fine</option><option value="standard">Medium</option><option value="strong" selected>Strong</option></select></label>
 <label>CRT shape <select id="crt-shape"><option value="lines" selected>Lines (scanlines)</option><option value="grid">Grid (squares)</option></select></label>
 <label>Blur <input id="blur" type="range" min="0" max="100" step="1" value="0"> <output id="blur-value">0 %</output></label>
+<hr>
+<div class="wbrow">Monitor knobs</div>
+<label>Brightness <input id="brightness" type="range" min="50" max="150" step="1" value="100"> <output id="brightness-value">100 %</output></label>
+<label>Contrast <input id="contrast" type="range" min="50" max="150" step="1" value="100"> <output id="contrast-value">100 %</output></label>
+<label>Saturation <input id="saturation" type="range" min="0" max="200" step="1" value="100"> <output id="saturation-value">100 %</output></label>
+<button id="monitor-reset" class="wbitem" type="button">Default brightness, contrast and colour</button>
+<p class="wbnote">Like the knobs of a CRT monitor: they change the picture, not the game. Each mode keeps its own settings.</p>
 <hr>
 <button id="fullscreen" class="wbitem" type="button" data-close-menu>Fullscreen <kbd>F</kbd></button>
 </div>
@@ -96,6 +106,7 @@
 <canvas class="crt-layer" aria-hidden="true"></canvas>
 </div>
 </div>
+<p id="keys" class="keys"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> move · <kbd>X</kbd> fire · <kbd>Space</kbd> at an Intex terminal · <kbd>E</kbd> Original / Enhanced · <kbd>M</kbd> sound · <kbd>H</kbd> help</p>
 </main>
 <script src="wb-menu.js"></script>
 <script src="wb-obraz.js"></script>

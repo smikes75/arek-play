@@ -3,7 +3,7 @@
  "files": [
   {
    "path": "native-core.wasm",
-   "iv": "tx4F6/HHGtYfTPk9",
+   "iv": "lP2q6MW7OLTiNWrD",
    "size": 9646531,
    "sha256": "ba6fc387761a941c82ed86a5f757cde5e7cfb272d1ff8f1bee025c244b135595",
    "encoding": "gzip",
@@ -16,9 +16,15 @@
     "af8ef14cf9729d9d41ec5a6705c4b4342ae9844db33ea5bb6cd91ff39a3175b6",
     "4b782994d649132d1d03c66d84f708ad42fecaf5e49dd5e28e646d2e51626961"
    ],
-   "iv": "zV8l6kH2cygB/lJj",
-   "wrapped": "pZalpo86vepW8An2IMlE3kYCjgbIIaF3I0giusznmn0T5yCqpBZgAbJm9BbNYUou",
+   "iv": "FKTabNTtOxlqnzFB",
+   "wrapped": "KQZi2k9wkbqbEUhKISJEcPmZJFXn4OuRRsBX1glyjqKZN5hoKGE/onfXsUF0YEqn",
    "label": "Fairlight 2-disk"
+  },
+  {
+   "payload": "a3350ba053fe8a81591a6ba708e803c0f2f0190383a72add076e7b59720bc4c7",
+   "iv": "/Fsaa6pyAUxe6yMV",
+   "wrapped": "UXFnrOUgrRs1Myq0Z5Vywp/b112PcEGIt8xh4kkV0rEzSi8DaObCyZ9YgiSmN73T",
+   "label": "any disks with the same game files"
   }
  ]
 }

@@ -13,5 +13,10 @@
     "bytes": 901120
    }
   ]
+ },
+ {
+  "name": "any disks with the same game files",
+  "payload": "a3350ba053fe8a81591a6ba708e803c0f2f0190383a72add076e7b59720bc4c7",
+  "bytes": 827897
  }
 ]

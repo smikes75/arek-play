@@ -206,9 +206,27 @@ const NATIVE_DATA = (() => {
         const m = /^DISK([12]):(.+)$/.exec(path); if (!m) return null;
         try { return readFile(m[1] === '1' ? adf1 : adf2, m[2]); } catch (e) { return null; }
     }
+    /** Obsah hry pro klic zapecetenych souboru prezentace (arek 0.5.12 payload, present/README.md): soubory, ktere prezentace levelu 1
+     *  cte (zmereno 2026-10-24 pruchodem k vytahu a game over: start z ADF = PARTF, partc, mapa L0MA a dlazdice LABM; nahravac hry
+     *  pri startu levelu CSAM, FSAM, MUSC, DECK, L0MA, L0AN, LABM, L0BO), v tomto pevnem poradi (podle "DISKn:JMENO"), kazdy rozbaleny
+     *  (ATN!): "DISKn:JMENO\0delka\0" + bajty. Nezavisi na bootbloku, zavadeci (load), cracktru, nazvu ani poloze bloku na disketě.
+     *  Chybi-li soubor nebo se nerozbali, vyhodi chybu s .file. */
+    const PAYLOAD_FILES = ['DISK1:CSAM', 'DISK1:FSAM', 'DISK1:PARTF', 'DISK1:partc', 'DISK2:DECK', 'DISK2:L0AN', 'DISK2:L0BO', 'DISK2:L0MA', 'DISK2:LABM', 'DISK2:MUSC'];
+    function payload(adf1, adf2) {
+        const parts = []; let n = 0;
+        for (const p of PAYLOAD_FILES) {
+            const m = /^DISK([12]):(.+)$/.exec(p); let u;
+            try { u = unpackATN(readFile(m[1] === '1' ? adf1 : adf2, m[2])); } catch (e) { e.file = p; throw e; }
+            if (!u.ok) { const e = new Error(p + ': ATN! se nerozbalil'); e.file = p; throw e; }
+            const head = Uint8Array.from(p + '\0' + u.data.length + '\0', (c) => c.charCodeAt(0));
+            parts.push(head, u.data); n += head.length + u.data.length;
+        }
+        const out = new Uint8Array(n); let o = 0; for (const q of parts) { out.set(q, o); o += q.length; }
+        return out;
+    }
     async function sha256(u8) {
         const h = await crypto.subtle.digest('SHA-256', u8); return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
-    return { rootEntries, readFile, diskTime, introImage, unpackATN, t7mp, runtimeMap, tiles, level, sha256, hunks, bootImage, gameFile, HUNK_BASES, HANDOFF, HANDOFF_REGS, MAP_W, MAP_H, MAP_ROW0, LEVEL_FILES };
+    return { payload, PAYLOAD_FILES, rootEntries, readFile, diskTime, introImage, unpackATN, t7mp, runtimeMap, tiles, level, sha256, hunks, bootImage, gameFile, HUNK_BASES, HANDOFF, HANDOFF_REGS, MAP_W, MAP_H, MAP_ROW0, LEVEL_FILES };
 })();
 if (typeof module !== 'undefined') module.exports = NATIVE_DATA;
