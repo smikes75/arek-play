@@ -1,0 +1,17 @@
+/* The presentation page: only what native-menu.css (the wb-shell look) does not have. */
+#present-loader{margin:24px auto}
+#present-loader details{padding:0 14px 10px;text-align:left;font-size:12px}
+#present-loader ul{padding-left:18px;word-break:break-all}
+.present-drop{margin:10px 14px;padding:16px;border:2px dashed var(--wb-blue)}
+.present-drop.over{background:var(--wb-orange)}
+.present-remember{display:block;margin:8px 14px}
+#present-message{min-height:1.2em}
+#present-message.bad{color:#a00;font-weight:bold}
+#present-forget{margin:0 14px 8px}
+#present-help-open{margin-left:4px}
+.present-about{width:620px;text-align:left}
+.present-about h1,.present-about h2,.present-about h3{padding:0 14px;font-size:15px;margin:12px 0 4px}
+.present-about ul{margin:4px 14px 8px 32px;padding:0}
+.present-about li{margin:2px 0}
+.present-about p:last-child{text-align:center;padding-bottom:10px}
+.present-recorder{position:fixed;left:8px;bottom:8px;z-index:40;padding:4px 8px;background:var(--wb-white);color:var(--wb-blue);border:2px solid var(--wb-blue);font-size:12px}

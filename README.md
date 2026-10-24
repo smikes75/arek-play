@@ -7,7 +7,7 @@ and playable in a browser **with your own disk image**.
 |---|---|---|
 | Superfrog (Team17, 1993), level 1 Magic Woods | [superfrog/](https://smikes75.github.io/arek-play/superfrog/) | disk 1 |
 | Alien Breed Special Edition 92 (Team17, 1992), level 1 | [alienbreed/](https://smikes75.github.io/arek-play/alienbreed/) | disks 1 and 2 |
-| Turrican II (Factor 5 / Rainbow Arts, 1991), world 1-1 | coming | disk 1 |
+| Turrican II (Factor 5 / Rainbow Arts, 1991), world 1-1 | [turrican2/](https://smikes75.github.io/arek-play/turrican2/) | disk 1 |
 
 ## What is here, and what is not
 

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en" data-present="1">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Turrican II · the first level</title>
+<link rel="stylesheet" href="native-menu.css">
+<link rel="stylesheet" href="present.css">
+</head>
+<body>
+<main id="shell">
+<nav id="wbbar" aria-label="Main menu">
+<span class="wbname">Turrican II</span>
+<div class="wbmenu">
+<button id="menu-display" class="wbtitle" type="button" aria-expanded="false" aria-controls="display-panel">Display</button>
+<div id="display-panel" class="wbpanel" aria-labelledby="menu-display" hidden>
+<div class="mode-picker" role="group" aria-label="Mode">
+<button id="mode-original" class="wbitem" type="button" aria-pressed="false">Original</button>
+<button id="mode-enhanced" class="wbitem" type="button" aria-pressed="true">Enhanced</button>
+</div>
+<p class="wbnote">E switches Original / Enhanced. Each mode keeps its own display settings.</p>
+<hr>
+<div class="wbrow">Zoom <output id="zoom-value">3×</output></div>
+<div class="zoom-buttons" role="group" aria-label="Zoom">
+<button type="button" data-zoom="0" aria-pressed="false">fit</button>
+<button type="button" data-zoom="2" aria-pressed="false">2×</button><button type="button" data-zoom="3" aria-pressed="true">3×</button><button type="button" data-zoom="4" aria-pressed="false">4×</button><button type="button" data-zoom="5" aria-pressed="false">5×</button><button type="button" data-zoom="6" aria-pressed="false">6×</button>
+</div>
+<label>Zoom <input id="zoom" type="range" min="0" max="6" step="0.1" value="3"></label>
+<hr>
+<label><input id="crt" type="checkbox" checked> CRT</label>
+<label>CRT shape <select id="crt-style"><option value="lines" selected>lines</option><option value="grid">grid</option></select></label>
+<label>CRT detail <select id="crt-detail"><option value="fine">fine</option><option value="standard" selected>standard</option><option value="strong">strong</option></select></label>
+<label>Blur <input id="blur" type="range" min="0" max="100" step="1" value="0"> <output id="blur-value">0 %</output></label>
+<p class="wbnote">0 % keeps sharp pixels; the CRT pattern stays sharp.</p>
+<hr>
+<button id="fullscreen" class="wbitem" type="button" data-close-menu>Fullscreen <kbd>F</kbd></button>
+</div>
+</div>
+<button id="present-help-open" class="wbtitle" type="button" aria-label="Help (H)">?</button>
+<div id="wbstatus"><output id="wbnotice" role="status" hidden></output></div>
+<span id="run-state">Enhanced</span><span class="wbgadget" aria-hidden="true"></span>
+</nav>
+<div id="stage">
+<section id="present-loader" class="wbwin" aria-label="Insert your disk">
+<h1 class="wbwtitle">Turrican II · the first level</h1>
+<p>Insert your own disk image <b>TURRICAN II disk 1</b> (an ADF file).</p>
+<p class="wbnote">The file stays in this browser; nothing is uploaded. The page itself holds no game data.</p>
+<div id="present-drop" class="present-drop" tabindex="0">Drop the ADF here or
+<button id="present-choose" class="primary" type="button">Choose the disk…</button></div>
+<label class="present-remember"><input id="present-remember" type="checkbox"> Remember this disk on this device</label>
+<button id="present-forget" type="button" hidden>Forget the remembered disk</button>
+<p id="present-message" role="status"></p>
+<details><summary>Accepted disks</summary><ul id="present-known"></ul><p class="wbnote">Verified so far with this one version of disk 1 only (a re-release by the group [L]EGEND); an original retail disk has not been checked yet.</p></details>
+<p class="wbnote">Arrows: move and jump · Z / Ctrl: fire · H: help · M: sound on / off</p>
+</section>
+<div class="game" hidden>
+<canvas id="map" width="304" height="216" tabindex="0" aria-label="Turrican II: arrows move and jump, Z or Ctrl fire, P pause."></canvas>
+<canvas class="crt-layer" aria-hidden="true"></canvas>
+</div>
+</div>
+<input id="present-file" type="file" accept=".adf,.ADF" hidden aria-label="Disk image (ADF)">
+<div id="present-help" class="requester-shade" hidden>
+<section class="wbwin requester" role="dialog" aria-modal="true" aria-labelledby="present-help-title">
+<div class="wbwtitle"><h2 id="present-help-title">Help</h2><button type="button" data-present-close aria-label="Close">×</button></div>
+<p><b>Arrows</b>: move, jump (up) and duck (down).</p>
+<p><b>Z</b> or <b>Ctrl</b>: fire. Hold it standing or ducking for the lightning beam; the arrows turn it.</p>
+<p><b>X</b> or <b>space</b>: power lines; together with fire, the smart bomb. <b>Down + space</b>: the gyroscope wheel (fire drops mines, up ends it).</p>
+<p><b>1 / 2 / 3</b>: the weapons you have collected.</p>
+<p><b>Gamepad</b>: stick or pad moves, A jumps, X or the right trigger fires, B is space, Y the special attack, LB / RB weapons, Start pause.</p>
+<p><b>E</b>: Original / Enhanced · <b>F</b>: fullscreen · <b>P</b>: pause · <b>M</b>: sound on / off · <b>H</b>: this help · <b>Esc</b>: close.</p>
+<p class="wbnote">This is the first level (world 1-1) only. Reaching its exit ends the demo.</p>
+</section>
+</div>
+<div id="present-about" class="requester-shade" hidden>
+<section class="wbwin requester present-about" role="dialog" aria-modal="true" aria-labelledby="present-about-title">
+<div class="wbwtitle"><h2 id="present-about-title">About this rebuild</h2></div>
+<div id="present-about-text"></div>
+<p><button id="present-again" class="primary" type="button">Play level 1 again</button></p>
+</section>
+</div>
+<!-- Controls the game reads but the presentation does not show (no other menus). -->
+<div id="present-hidden" hidden aria-hidden="true">
+<section id="intro"></section><button id="insert" type="button"></button><p id="intro-status"></p><output id="status"></output>
+<input id="disk" type="file"><input id="disk2" type="file"><button id="disk-insert" type="button"></button><button id="disk2-insert" type="button"></button><a id="emulated-link"></a>
+<select id="viewport"><option value="304x192">304</option><option value="384x216">384</option><option value="448x256" selected>448</option></select><output id="viewport-status"></output>
+<select id="hud-style"><option value="smooth" selected>s</option><option value="original">o</option></select>
+<input id="brightness" type="range" min="50" max="150" step="1" value="100"><output id="brightness-value"></output>
+<input id="contrast" type="range" min="50" max="150" step="1" value="100"><output id="contrast-value"></output>
+<input id="saturation" type="range" min="0" max="200" step="1" value="100"><output id="saturation-value"></output>
+<button id="monitor-reset" type="button"></button><p id="view-mode-note"></p><button id="view-reset" type="button"></button><output id="display-status"></output>
+<button id="menu-effects" type="button"></button><p id="effects-note"></p>
+<fieldset id="enhanced-settings"><input id="smooth" type="checkbox" checked><input id="blend" type="checkbox" checked><input id="sky-smooth" type="checkbox" checked><input id="object-blend" type="checkbox" checked></fieldset>
+<select id="level-select"><option value="0">1-1</option></select><button id="level-start" type="button"></button>
+<button id="reset" type="button"></button><button id="pause-game" type="button"></button><input id="follow" type="checkbox" checked>
+<select id="gamepad"><option value="auto">auto</option></select><select id="gamepad-fire"><option value="auto">auto</option></select><output id="gamepad-status"></output>
+<input id="sound" type="checkbox" checked><input id="music" type="checkbox" checked><input id="volume" type="range" min="0" max="100" value="50"><button id="audio-resume" type="button"></button><output id="audio-status"></output>
+<select id="test-scene"><option value="start">start</option></select><button id="test-start" type="button"></button>
+<input id="x" type="range" min="0" max="0" value="0"><input id="y" type="range" min="0" max="0" value="0">
+<input id="enhanced-flyer" type="checkbox"><input id="pal-aspect" type="checkbox"><p id="frame-status"></p>
+<section id="hud" hidden><strong data-hud="energy"></strong><progress max="55" value="55"></progress><strong data-hud="lives"></strong><strong data-hud="score"></strong><strong data-hud="gems"></strong><strong data-hud="gun"></strong><strong data-hud="beam"></strong><strong data-hud="shield"></strong><strong data-hud="walls"></strong><p data-hud="state"></p><p data-hud="notice" hidden></p></section>
+<select id="checkpoint-slot"></select><button id="checkpoint-save" type="button"></button><button id="checkpoint-load" type="button"></button><button id="checkpoint-list" type="button"></button><output id="checkpoint-status"></output>
+<div id="load-requester" hidden><button type="button" data-close-dialog></button><div id="load-list"></div><p id="load-note"></p></div>
+</div>
+</main>
+<script id="present-config" type="application/json">{"seal": "sealed/seal.json", "sealedBase": "sealed/", "scripts": ["native-level.js", "native-player.js", "native-camera.js", "native-loot.js", "native-enemies.js", "native-dragons.js", "native-robot.js", "native-boss21.js", "native-boss22.js", "native-bosses.js", "native-weapons.js", "native-animation.js", "native-video.js", "native-world.js", "native-carriers.js", "native-level12.js", "native-super.js", "native-ship.js", "native-level32.js", "native-boss52.js", "native-level52.js", "native-level51.js", "native-level42.js", "native-boss41.js", "native-world4.js", "native-level33.js", "native-level31.js", "native-level22.js", "native-world2.js", "native-ending.js", "native-combat.js", "native-campaign.js", "native-view.js", "native-intro.js", "native-title.js", "native-finale.js", "native-store.js", "native-hud.js", "native-app.js"], "sound": ["native-sound.js", "native-music.js"], "worklet": "present-worklet.js", "about": "ABOUT.md", "disks": [{"name": "Turrican II disk 1, the [L]EGEND release (TURRI2-1.ADF)", "sha256": "98b0f313944a0bcfe84d3c1ae516a2fae8ad0ad2868fea8d20a111c8270ac932"}]}</script>
+<script src="wb-obraz.js"></script>
+<script src="wb-seal.js"></script>
+<script src="native-data.js"></script>
+<script src="native-menu.js"></script>
+<script src="native-input.js"></script>
+<script src="native-audio.js"></script>
+<script src="present.js"></script>
+</body>
+</html>
