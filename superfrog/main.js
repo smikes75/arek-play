@@ -6,7 +6,6 @@ import { SceneRenderer, PK_SIZE, SLOTS, MAP_BYTES } from './scene.js';
 
 const $ = id => document.getElementById(id);
 const W = 716, H = 285, ADF_SIZE = 901120;
-const KNOWN = { '3484059b87a40da5a297b3926470c6843120094d4e5154a871d4f57a8c126768': 'spfrogd1.adf: Superfrog disk 1 (Crystal crack)' };   // ověřené verze (seal.json keys[].disks)
 const gameEl = document.querySelector('.game');
 const disp = new Display(gameEl, { storageKey: 'sf-present-display' });
 window.obraz = disp;
@@ -57,7 +56,7 @@ async function useDisk(bytes, name, fromStore = false) {
   const [id] = await WBSEAL.ids([bytes]);
   try { box = await WBSEAL.open(await getManifest(), [bytes]); }
   catch (e) {
-    const known = (await getManifest()).keys.flatMap(k => k.disks).map(h => `<br>· ${esc(KNOWN[h] || 'disk 1')}, sha256 <code>${h}</code>`).join('');
+    const known = (await getManifest()).keys.map(k => `<br>· ${esc(k.label || 'disk 1')}, sha256 <code>${k.disks.join(', ')}</code>`).join('');   // popisky z seal.json (--label)
     renderDisk(`<b>Unknown disk:</b> ${esc(name)}<br>sha256 <code>${id}</code><br>This page knows only these versions of Superfrog disk 1 (more will be added once verified):${known}`, true);
     return false;
   }
@@ -107,13 +106,12 @@ async function startAudio(port) {
 function toggleMute() { muted = !muted; if (audioNode) audioNode.port.postMessage({ vol: muted ? 0 : 0.8 }); note(muted ? 'Sound off (M)' : 'Sound on (M)'); }
 
 // --- spuštění: rozšifrovat engine.wasm (gzip) a loader.js, worker, vykreslování ---
-async function gunzip(buf) { return new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer(); }
 let files = null, drawing = false;
 async function start() {
   if (running || !disk) return;
   running = true; renderDisk(); setStatus('Opening the sealed engine with your disk…');
   try {
-    if (!files) files = { wasm: await gunzip(await box.fetch('engine.wasm.gz', 'sealed/')), loader: new TextDecoder().decode(await box.fetch('loader.js', 'sealed/')) };
+    if (!files) files = { wasm: await box.fetch('engine.wasm', 'sealed/'), loader: new TextDecoder().decode(await box.fetch('loader.js', 'sealed/')) };   // --gzip: wb-seal.js rozbalí sám
   } catch (e) { running = false; renderDisk('Could not open the sealed files with this disk: ' + esc(e.message), true); return; }
   intro.hidden = true; gameEl.hidden = false; $('loading').hidden = false; disp.layout(); syncUi(); $('screen').focus({ preventScroll: true });
   boot();

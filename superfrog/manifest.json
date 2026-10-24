@@ -1,13 +1,13 @@
 {
  "game": "Superfrog (Team17, 1993), level 1 Magic Woods",
- "kit": "amiga-re-kit 0.5.8",
- "total_bytes": 1771449,
+ "kit": "amiga-re-kit 0.5.11",
+ "total_bytes": 3326696,
  "accepted_disks": [
   {
    "disks": [
     "3484059b87a40da5a297b3926470c6843120094d4e5154a871d4f57a8c126768"
    ],
-   "name": "spfrogd1.adf (Superfrog disk 1, Crystal crack)"
+   "name": "spfrogd1.adf: Superfrog disk 1 (Crystal crack)"
   }
  ],
  "files": [
@@ -27,8 +27,8 @@
   },
   {
    "path": "engine.js",
-   "size": 17697,
-   "sha256": "2c3bbdc21fbeef28340ae6f2b8756bc58dd3d8b76f5490c644d900ca03abf94e",
+   "size": 17785,
+   "sha256": "31bd66782a8f328e96a587bcfceeb8ccc9aab8ad0b546fc4ac2ac1c2cd1b295e",
    "derived": false,
    "sealed": false,
    "note": "Emscripten glue (generic, no game logic)"
@@ -42,8 +42,8 @@
   },
   {
    "path": "main.js",
-   "size": 16290,
-   "sha256": "64cc57c83b30c2f46233f0082b71eabcad55da60f3a2db216a3173cd9a0943f1",
+   "size": 16020,
+   "sha256": "1c0df75dcbd2f038c9a6cc0818495291c4363ddab9095bf8ee79b5d1cf0874de",
    "derived": false,
    "sealed": false
   },
@@ -62,25 +62,25 @@
    "sealed": false
   },
   {
-   "path": "sealed/engine.wasm.gz.sealed",
-   "size": 1436271,
-   "sha256": "e2b2ac43bb4b8e2e9baa1bcc2b3eb854644a89800f99e96ba83eb6e88b700cfb",
+   "path": "sealed/engine.wasm.sealed",
+   "size": 2995422,
+   "sha256": "cb9c1b941a9f8cbbda3575d116089a72b372a35ef8a74a819ff03dc27fb6fd24",
    "derived": true,
    "sealed": true,
-   "note": "game code translated 68000 -> C -> WASM (Emscripten, ASYNCIFY), gzip, sealed"
+   "note": "game code translated 68000 -> C -> WASM (Emscripten, ASYNCIFY), sealed with --gzip"
   },
   {
    "path": "sealed/loader.js.sealed",
-   "size": 7291,
-   "sha256": "9da89c9786e246d6e05087e4724ed9befb13522e13199542736108c14e658366",
+   "size": 3035,
+   "sha256": "e80d5bfa5feb14338ebb592f5e61d55299109eb0383cbcc79e6e0442f16ba934",
    "derived": true,
    "sealed": true,
    "note": "boot chain: Atomik depacker and HUNK relocation measured from the game, sealed"
   },
   {
    "path": "sealed/seal.json",
-   "size": 592,
-   "sha256": "0e1e925f2d4d1ae5e4735c61bbdd7538886ce5f7d6ba1b67b32599599818bb02",
+   "size": 739,
+   "sha256": "3091bba146bbc0b42c918475c73f38d5ddec9eb1137bca8b584a018e82426ebf",
    "derived": false,
    "sealed": false
   },
@@ -129,8 +129,8 @@
   },
   {
    "path": "wb-seal.js",
-   "size": 3540,
-   "sha256": "88634b48c3602c7d3ed7c030c46021a2c95a704c69bf1f40ae11e785973849cd",
+   "size": 3927,
+   "sha256": "f70cfbde38d55233f79988f4b3afa6187358f939eb39250882dc8e3f57f97fa4",
    "derived": false,
    "sealed": false,
    "note": "amiga-re-kit seal opener"
