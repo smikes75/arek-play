@@ -18,9 +18,14 @@ any sub-folder (relative paths only) on a plain static server without COOP/COEP 
   (`native-*.js`, the sound and music code), AES-GCM, opened by `WBSEAL.open` with the visitor's
   disk 1; the page loads them as Blob scripts. `manifest.json` lists each file with size, sha256,
   `derived` and `sealed`, and the accepted disks.
+- `shots/`: four screenshots of the rebuild in game pixels (zoom 1, no CRT, no blur) with
+  `shots/README.md`; made by `python3.14 tools/present-shots.py` (replays `present/1-1-input.json`)
+  into `build/present-shots/` and copied in by the build. They show game graphics, so they are kept
+  out of git; `manifest.json` marks them `"screenshot": true`.
 
-No game data is in the package and none is fetched: graphics, maps, sound and music come from the
-visitor's ADF in the browser.
+The page fetches no game data: everything the game uses (graphics, maps, sound and music) comes
+from the visitor's ADF in the browser. No disk file is in the package; the only game pictures are
+the four screenshots in `shots/`, which the page itself does not load.
 
 ## Taking it over (kit session)
 
