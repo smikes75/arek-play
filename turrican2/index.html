@@ -33,6 +33,13 @@
 <label>Blur <input id="blur" type="range" min="0" max="100" step="1" value="0"> <output id="blur-value">0 %</output></label>
 <p class="wbnote">0 % keeps sharp pixels; the CRT pattern stays sharp.</p>
 <hr>
+<div class="wbrow">Monitor</div>
+<label>Brightness <input id="brightness" type="range" min="50" max="150" step="1" value="100"> <output id="brightness-value">100 %</output></label>
+<label>Contrast <input id="contrast" type="range" min="50" max="150" step="1" value="100"> <output id="contrast-value">100 %</output></label>
+<label>Colour <input id="saturation" type="range" min="0" max="200" step="1" value="100"> <output id="saturation-value">100 %</output></label>
+<button id="monitor-reset" class="wbitem" type="button">Default brightness, contrast and colour</button>
+<p class="wbnote">Like the knobs of a CRT monitor: they change the picture only.</p>
+<hr>
 <button id="fullscreen" class="wbitem" type="button" data-close-menu>Fullscreen <kbd>F</kbd></button>
 </div>
 </div>
@@ -84,10 +91,7 @@
 <input id="disk" type="file"><input id="disk2" type="file"><button id="disk-insert" type="button"></button><button id="disk2-insert" type="button"></button><a id="emulated-link"></a>
 <select id="viewport"><option value="304x192">304</option><option value="384x216">384</option><option value="448x256" selected>448</option></select><output id="viewport-status"></output>
 <select id="hud-style"><option value="smooth" selected>s</option><option value="original">o</option></select>
-<input id="brightness" type="range" min="50" max="150" step="1" value="100"><output id="brightness-value"></output>
-<input id="contrast" type="range" min="50" max="150" step="1" value="100"><output id="contrast-value"></output>
-<input id="saturation" type="range" min="0" max="200" step="1" value="100"><output id="saturation-value"></output>
-<button id="monitor-reset" type="button"></button><p id="view-mode-note"></p><button id="view-reset" type="button"></button><output id="display-status"></output>
+<p id="view-mode-note"></p><button id="view-reset" type="button"></button><output id="display-status"></output>
 <button id="menu-effects" type="button"></button><p id="effects-note"></p>
 <fieldset id="enhanced-settings"><input id="smooth" type="checkbox" checked><input id="blend" type="checkbox" checked><input id="sky-smooth" type="checkbox" checked><input id="object-blend" type="checkbox" checked></fieldset>
 <select id="level-select"><option value="0">1-1</option></select><button id="level-start" type="button"></button>
