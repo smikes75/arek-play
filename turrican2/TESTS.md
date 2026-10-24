@@ -3,7 +3,7 @@
 `python3.14 tools/presenttest.py` (Playwright Chromium headless). The package `build/present/` is
 served by Python's `http.server` (no COOP/COEP headers) as `play/turrican2/` of a temporary site;
 the test disks lie next to it in `test/` and are not part of the package. Kit: `arek 0.5.10`
-(`wb-obraz.js` 1.3 sha256 371219df…, `wb-seal.js` f70cfbde…). Date: 2026-10-23/24 (re-run 2026-10-24 after the start without the opening grid).
+(`wb-obraz.js` 1.3 sha256 371219df…, `wb-seal.js` f70cfbde…). Date: 2026-10-23/24 (re-run 2026-10-24 after the start without the opening grid and again after the 5 s Original start, smooth sky off).
 
 | # | test | result |
 |---|---|---|
