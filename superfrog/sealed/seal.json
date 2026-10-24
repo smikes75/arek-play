@@ -3,7 +3,7 @@
  "files": [
   {
    "path": "engine.wasm",
-   "iv": "uWGigLMX6BJGSLkT",
+   "iv": "eiR36+ZfYbtHT1a+",
    "size": 14407129,
    "sha256": "67bd46864d7c3387daf83106320da80fc4c4a2349d6d16a3a5222666eca4c187",
    "encoding": "gzip",
@@ -11,7 +11,7 @@
   },
   {
    "path": "loader.js",
-   "iv": "pGKP6jUfOVQxpl//",
+   "iv": "IbPI5h5H32jMvVrv",
    "size": 7275,
    "sha256": "c77afb8353afa9de44e8557a5f772f6f68baa622e2b2d350f43cbe3b5287ff56",
    "encoding": "gzip",
@@ -23,9 +23,15 @@
    "disks": [
     "3484059b87a40da5a297b3926470c6843120094d4e5154a871d4f57a8c126768"
    ],
-   "iv": "jKuOP5GdV2cWIYRv",
-   "wrapped": "Pc4prTaeo5P0blMNlh7Riuk7r3yD4mvQI5B3AFkWCGjAF70s5UuY/iSqiMqLFx+9",
+   "iv": "klPcf6XMDNvTRg0f",
+   "wrapped": "0gcI0yjHhPArJV3lS5i+todexhN2gNstj8X/Y0rZQevt8ZNlgqHn8EqWq6dtFmqq",
    "label": "spfrogd1.adf: Superfrog disk 1 (Crystal crack)"
+  },
+  {
+   "payload": "a6438cf7f26639c1f91a2280aec90c5ddce10d6f2632a7ac627f1718b39d9def",
+   "iv": "lINRhcUv5DAOSniy",
+   "wrapped": "WlPSXObU1es27imbCScf/skCC/ZPoAbUUowFMtaz82bUTClF2KuFP6J7rVQNZQXX",
+   "label": "any disk 1 with the same game files"
   }
  ]
 }

@@ -1,13 +1,17 @@
 {
  "game": "Superfrog (Team17, 1993), level 1 Magic Woods",
- "kit": "amiga-re-kit 0.5.11",
- "total_bytes": 3356694,
+ "kit": "amiga-re-kit 0.5.12",
+ "total_bytes": 3360123,
  "accepted_disks": [
   {
    "disks": [
     "3484059b87a40da5a297b3926470c6843120094d4e5154a871d4f57a8c126768"
    ],
    "name": "spfrogd1.adf: Superfrog disk 1 (Crystal crack)"
+  },
+  {
+   "payload": "a6438cf7f26639c1f91a2280aec90c5ddce10d6f2632a7ac627f1718b39d9def",
+   "name": "any disk 1 with the same game files"
   }
  ],
  "files": [
@@ -42,8 +46,8 @@
   },
   {
    "path": "main.js",
-   "size": 16952,
-   "sha256": "0447095f0896e642ba6701c52b824a7318c3a4e6f82c3e56c7827a325a928b04",
+   "size": 18127,
+   "sha256": "a8bdd333a14b41bd187b56e9799c822e033268639b42a0cdabed9a7e3273863e",
    "derived": false,
    "sealed": false
   },
@@ -55,6 +59,14 @@
    "sealed": false
   },
   {
+   "path": "payload.json",
+   "size": 323,
+   "sha256": "81bd132c1a38b5c86e780401cb9df4c36e58c59e9f5430bbcc886bbd8ecf9504",
+   "derived": false,
+   "sealed": false,
+   "note": "which disk 1 byte ranges form the payload for the content key (offsets only, no game data)"
+  },
+  {
    "path": "scene.js",
    "size": 14256,
    "sha256": "7717b738fc4dcf3701205521263f2df3158c3e55c9f9496abee8906b7e1d35e1",
@@ -64,7 +76,7 @@
   {
    "path": "sealed/engine.wasm.sealed",
    "size": 2995739,
-   "sha256": "da756e23e3593637993595cb370f59bc7f99b3e1171ae1f7084233877c28d4f4",
+   "sha256": "085853a999fb184c428d1fbee6e1483c73f9a233560c7d1c59c5dbd2777fce8f",
    "derived": true,
    "sealed": true,
    "note": "game code translated 68000 -> C -> WASM (Emscripten, ASYNCIFY), sealed with --gzip"
@@ -72,15 +84,15 @@
   {
    "path": "sealed/loader.js.sealed",
    "size": 3035,
-   "sha256": "cffd98e086f03aa5b7e5e2bf2f8f440d437a1c38eaeb6d53620c5237cd2d7e29",
+   "sha256": "6df5f602faf321440f3e947b8c4ee7d2d03436a923ba71f62b8ed7904e9e585f",
    "derived": true,
    "sealed": true,
    "note": "boot chain: Atomik depacker and HUNK relocation measured from the game, sealed"
   },
   {
    "path": "sealed/seal.json",
-   "size": 739,
-   "sha256": "4c2eb1b57dca1e0203f318819275468bb556f28123e5486d9ad85a6e3c65fed0",
+   "size": 991,
+   "sha256": "d8969270ab2bc58c6fc1401018e36173bf3872f925d9fa3f187d1ec78610449e",
    "derived": false,
    "sealed": false
   },
@@ -129,16 +141,16 @@
   },
   {
    "path": "wb-obraz.js",
-   "size": 11815,
-   "sha256": "371219df825df98c590a6e1473338738ff2c2d8c45f8c6ed32788bf32b06bdf5",
+   "size": 11954,
+   "sha256": "9eda0e23f6e5f21e4af82db90d501230de416ddedbbe23a1de7fa01a715f66ba",
    "derived": false,
    "sealed": false,
    "note": "amiga-re-kit display contract 1.3"
   },
   {
    "path": "wb-seal.js",
-   "size": 3927,
-   "sha256": "f70cfbde38d55233f79988f4b3afa6187358f939eb39250882dc8e3f57f97fa4",
+   "size": 5467,
+   "sha256": "519f83ff16fbd7f3048df3154da5c5d0912058e66f7112fd15f592be905d1912",
    "derived": false,
    "sealed": false,
    "note": "amiga-re-kit seal opener"

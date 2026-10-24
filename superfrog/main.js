@@ -28,7 +28,7 @@ const frame = new Uint8Array(W * H * 3), enhFrame = new Uint8Array((336 + 2 * EN
 const sceneBuf = new ArrayBuffer(PK_SIZE * SLOTS), mapBuf = new ArrayBuffer(MAP_BYTES), sceneU8 = new Uint8Array(sceneBuf), mapU8 = new Uint8Array(mapBuf);
 disp.scene = new SceneRenderer(sceneBuf, mapBuf, ctl);
 // testy (present/TESTS.md): čítač snímků ctl[0], přehrání záznamu od začátku levelu
-window.presentTest = { ctl, play(text) { window.__play = text.split('\n'); }, about: () => showAbout(),
+window.presentTest = { ctl, key: () => box && box.key, play(text) { window.__play = text.split('\n'); }, about: () => showAbout(),
   smooth(on) { disp.cfg.enhanced.smooth = on; },   // snímky do galerie: Vylepšeno bez mezipoloh = přesně snímek hry
   redraw() { const ew = disp.wideHud() && ctl[6] === ENH_MX; disp.hudWide = ew; disp.present(frame, ew ? enhFrame : null); } };   // po pauze (P): poslední snímek znovu v aktuálním režimu (Originál i Vylepšeno ze stejného tiku)
 
@@ -48,6 +48,16 @@ const idb = () => new Promise((res, rej) => { const r = indexedDB.open('superfro
 const idbOp = async (mode, fn) => { try { const db = await idb(); return await new Promise((res, rej) => { const t = db.transaction('disks', mode), r = fn(t.objectStore('disks')); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }); } catch (e) { return null; } };
 const remember = () => { try { return localStorage.getItem('sf-present-remember') === '1'; } catch (e) { return false; } };
 async function getManifest() { if (!manifest) manifest = await (await fetch('sealed/seal.json')).json(); return manifest; }
+// payload (klíč z obsahu, kit 0.5.12): úseky diskety, které přestavba čte (payload.json, docs/PAYLOAD.md); stejně staví tools/present_payload.py
+let payloadSpec = null;
+async function buildPayload(bytes) {
+  if (!payloadSpec) payloadSpec = await (await fetch('payload.json')).json();
+  const te = new TextEncoder(), parts = [];
+  for (const [off, n] of payloadSpec.ranges) { parts.push(te.encode(`d1:${off}:${n}\0`), bytes.subarray(off, off + n)); }
+  const out = new Uint8Array(parts.reduce((a, p) => a + p.length, 0)); let o = 0;
+  for (const p of parts) { out.set(p, o); o += p.length; }
+  return out;
+}
 function renderDisk(msg, bad) {
   $('disks').innerHTML = `<li><span>Disk 1</span><span class="${disk ? 'disk-ok' : 'disk-bad'}">${disk ? 'verified: ' + diskName : 'missing'}</span></li>`;
   $('start').disabled = !disk || running;
@@ -56,14 +66,15 @@ function renderDisk(msg, bad) {
 }
 async function useDisk(bytes, name, fromStore = false) {
   if (bytes.length !== ADF_SIZE) { renderDisk(`${esc(name)}: not an Amiga disk image (${bytes.length} bytes, an ADF has ${ADF_SIZE}).`, true); return false; }
-  const [id] = await WBSEAL.ids([bytes]);
-  try { box = await WBSEAL.open(await getManifest(), [bytes]); }
+  const [id] = await WBSEAL.ids([bytes]), payload = await buildPayload(bytes);
+  try { box = await WBSEAL.open(await getManifest(), [bytes], { payload }); }
   catch (e) {
-    const known = (await getManifest()).keys.map(k => `<br>· ${esc(k.label || 'disk 1')}, sha256 <code>${k.disks.join(', ')}</code>`).join('');   // popisky z seal.json (--label)
-    renderDisk(`<b>Unknown disk:</b> ${esc(name)}<br>sha256 <code>${id}</code><br>This page knows only these versions of Superfrog disk 1 (more will be added once verified):${known}`, true);
+    const pid = await WBSEAL.payloadId(payload); disk = null; box = null;   // odmítnutá disketa nahradí dřív vloženou (Play zakázáno)
+    const known = (await getManifest()).keys.map(k => k.disks ? `<br>· ${esc(k.label || 'disk 1')}, sha256 <code>${k.disks.join(', ')}</code>` : `<br>· ${esc(k.label || 'same game files')}, content id <code>${k.payload}</code>`).join('');   // popisky z seal.json (--label, --payload-label)
+    renderDisk(`<b>Unknown disk:</b> ${esc(name)}<br>disk sha256 <code>${id}</code><br>content id <code>${pid}</code><br>This version of Superfrog disk 1 is not accepted yet. You can report both hashes in the <a href="https://github.com/smikes75/arek-play/issues" target="_blank" rel="noopener">arek-play issues</a>. Accepted so far:${known}`, true);
     return false;
   }
-  disk = bytes; diskName = name; renderDisk(fromStore ? 'Disk loaded from this device.' : '');
+  disk = bytes; diskName = box.key.payload ? `${name} (${box.label || 'same game files'})` : name; renderDisk(fromStore ? 'Disk loaded from this device.' : '');
   if (remember() && !fromStore) idbOp('readwrite', st => st.put(bytes, 'disk1'));
   return true;
 }
