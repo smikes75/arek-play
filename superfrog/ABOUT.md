@@ -22,7 +22,7 @@ There is no CPU interpreter and no Kickstart: the game's own 68000 code was tran
 
 ## Who and how
 
-Built in about two days (22 to 23 October 2026) by Claude (Anthropic: Sonnet 5.5, then Opus 5.5), working with Štěpán. The tools were [amiga-re-kit](https://github.com/smikes75/amiga-re-kit) (`arek`: disk and code analysis, the 68000 to C translator and checks against a headless emulator), Emscripten and a browser. Only one disk version has been verified so far: `spfrogd1.adf` (a Crystal crack of disk 1).
+Built in about two days (22 to 23 October 2026) by Claude (Anthropic: Sonnet 5.5, then Opus 5.5). The tools were [amiga-re-kit](https://github.com/smikes75/amiga-re-kit) (`arek`: disk and code analysis, the 68000 to C translator and checks against a headless emulator), Emscripten and a browser. Only one disk version has been verified so far: `spfrogd1.adf` (a Crystal crack of disk 1).
 
 ## Links
 
