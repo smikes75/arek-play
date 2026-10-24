@@ -23,6 +23,14 @@ the vAmiga emulator as the measuring instrument and the amiga-re-kit toolkit.
 Enhanced keeps the game's 50 Hz rules and adds a wider 448 × 256 view, smooth motion at 60 to
 144 Hz and a smooth status bar.
 
+## Like AREK? Support the project's next steps
+
+AREK is free and stays free. Every five euros goes into the next piece of it: more packers, a
+better recompiler, more tests, more games. Pay through Revolut.me (Revolut, card or Apple Pay):
+[revolut.me · €5](https://revolut.me/stepan2vpo?amount=500&currency=EUR)
+
+![QR code: Revolut.me, €5](support-qr.svg)
+
 - [amiga-re-kit on the web](https://smikes75.github.io/amiga-re-kit/)
 - [amiga-re-kit on GitHub](https://github.com/smikes75/amiga-re-kit)
 

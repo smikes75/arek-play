@@ -9,7 +9,15 @@
 #present-message.bad{color:#a00;font-weight:bold}
 #present-forget{margin:0 14px 8px}
 #present-help-open{margin-left:4px}
-.present-about{width:620px;text-align:left}
+.present-about{width:900px;text-align:left;display:grid;grid-template-columns:1fr 230px;grid-template-rows:auto auto 1fr auto;align-items:start}
+.present-about>.wbwtitle{grid-column:1/-1}
+#present-about-text{grid-column:1;grid-row:2/5}
+.present-support{grid-column:2;grid-row:2;margin:8px 10px 0 0;padding:4px 0 8px;border:2px solid var(--wb-blue);text-align:center}
+.present-support h2,.present-support h3{font-size:13px!important;padding:0 8px!important}
+.present-support p{padding:0 8px;font-size:12px}
+.present-img img{display:block;margin:6px auto;image-rendering:pixelated}
+.present-about>p:last-child{grid-column:2;grid-row:3}
+@media(max-width:760px){.present-about{display:block}}
 .present-about h1,.present-about h2,.present-about h3{padding:0 14px;font-size:15px;margin:12px 0 4px}
 .present-about ul{margin:4px 14px 8px 32px;padding:0}
 .present-about li{margin:2px 0}

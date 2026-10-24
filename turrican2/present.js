@@ -127,6 +127,8 @@
         for (const raw of md.split('\n')) {
             const line = raw.trimEnd();
             if (!line.trim()) { flush(); continue; }
+            const img = /^!\[([^\]]*)\]\(([\w.-]+\.(?:svg|png))\)$/.exec(line.trim());  // a picture next to ABOUT.md
+            if (img) { flush(); out.push('<p class="present-img"><img src="' + esc(img[2]) + '" alt="' + esc(img[1]) + '" width="160" height="160"></p>'); continue; }
             if (/^#{1,3} /.test(line)) { flush(); const n = line.indexOf(' '); out.push('<h' + (n + 1) + '>' + inline(line.slice(n + 1)) + '</h' + (n + 1) + '>'); continue; }
             if (/^[-*] /.test(line)) { if (para.length) { out.push('<p>' + inline(para.join(' ')) + '</p>'); para = []; } if (!list) { out.push('<ul>'); list = true; } out.push('<li>' + inline(line.slice(2)) + '</li>'); continue; }
             if (list && /^\s+/.test(raw)) { out[out.length - 1] = out[out.length - 1].replace(/<\/li>$/, ' ' + inline(line.trim()) + '</li>'); continue; }
@@ -137,7 +139,17 @@
         return out.join('\n');
     }
     window.addEventListener('native-present-end', async () => {
-        if (!$('present-about-text').innerHTML) $('present-about-text').innerHTML = markdown(await (await fetch(config.about)).text());
+        if (!$('present-about-text').innerHTML) {
+            const box = $('present-about-text');
+            box.innerHTML = markdown(await (await fetch(config.about)).text());
+            // The support section goes to a column beside the text: its QR shows without scrolling.
+            const h = [...box.querySelectorAll('h2,h3')].find((e) => /support/i.test(e.textContent));
+            if (h) {
+                const aside = document.createElement('aside'); aside.className = 'present-support';
+                for (let n = h; n && !(n !== h && n.tagName === h.tagName) && n.tagName !== 'UL'; ) { const next = n.nextElementSibling; aside.append(n); n = next; }
+                box.parentElement.insertBefore(aside, box.nextSibling);
+            }
+        }
         about.hidden = false; $('present-again').focus();
         if (recording) recording.download();                 // the finished run, ready for the test
     });

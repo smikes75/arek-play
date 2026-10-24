@@ -8,6 +8,9 @@ any sub-folder (relative paths only) on a plain static server without COOP/COEP 
 
 - `index.html`, `present.js`, `present.css`, `native-menu.css`: the page (wb-shell look, one menu
   Display, help H, sound M, the disk loader and the about screen from `ABOUT.md`).
+- `support-qr.svg`: the QR code of the support link in `ABOUT.md` (Revolut.me, €5), a plain SVG
+  from the kit's `docs/img`; not derived from the game. The about screen shows the support
+  section in a column beside the text, so the QR needs no scrolling.
 - `wb-obraz.js` (display contract 1.3) and `wb-seal.js`: the kit's reference files, unchanged
   (sha256 in `manifest.json`).
 - Open shell code without game logic: `native-data.js` (ADF/AmigaDOS reader and unpacker),
