@@ -3,15 +3,15 @@
  "files": [
   {
    "path": "engine.wasm",
-   "iv": "YNsSpj8a6nGHqdEr",
-   "size": 14406297,
-   "sha256": "74a87f8b97e655ded9ae5910895b2fd84c9a863856b609e61e6700a741685832",
+   "iv": "28QRkXW9mcVyphJJ",
+   "size": 14407129,
+   "sha256": "67bd46864d7c3387daf83106320da80fc4c4a2349d6d16a3a5222666eca4c187",
    "encoding": "gzip",
-   "stored": 2995406
+   "stored": 2995723
   },
   {
    "path": "loader.js",
-   "iv": "SYH0lqd/WAbD+k3R",
+   "iv": "BaelsEcNLM945YRf",
    "size": 7275,
    "sha256": "c77afb8353afa9de44e8557a5f772f6f68baa622e2b2d350f43cbe3b5287ff56",
    "encoding": "gzip",
@@ -23,8 +23,8 @@
    "disks": [
     "3484059b87a40da5a297b3926470c6843120094d4e5154a871d4f57a8c126768"
    ],
-   "iv": "tJwGn0rbLW1cab64",
-   "wrapped": "2F4e9HhqErrNihy+86DQbjhYVjMuEkGFOc84XJYepzM4vdCzvuM08z5v3RZ+TWY0",
+   "iv": "+BVmsp5HQzSCUWjK",
+   "wrapped": "r/SpgxfGUdvSaIy0tHxM76wlRYux20mMPCb4gteQGfZ0wM+ZLXKoJOOwsS0/3nGU",
    "label": "spfrogd1.adf: Superfrog disk 1 (Crystal crack)"
   }
  ]

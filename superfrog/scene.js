@@ -130,7 +130,7 @@ export class SceneRenderer {
     }
     ovl32.fill(0); med32.fill(0);
     // Rozšířený výřez, žába při návratu (start levelu, po smrti; změřeno: visí s vrcholem vs 38 asi 66 snímků, pak padá na vs 159 = vrchol 120 řádků výřezu):
-    // v řádcích HUD visí na volném místě hned za poslední hlavou životů (sloupec 130 + 16 × počet hlav z h[14], levá skupina HUD +40; volba Štěpána
+    // v řádcích HUD visí na volném místě hned za poslední hlavou životů (sloupec 130 + 16 × počet hlav z h[14], levá skupina HUD +40; zvoleno
     // 2026-10-23) a k poloze ve světě se srovná pozvolna po celou dobu pádu (vodorovný rozdíl × (1 − vrchol/120)), takže padá téměř svisle.
     let respF = null;
     if (wide) {

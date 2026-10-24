@@ -1,7 +1,7 @@
 {
  "game": "Superfrog (Team17, 1993), level 1 Magic Woods",
  "kit": "amiga-re-kit 0.5.11",
- "total_bytes": 3326696,
+ "total_bytes": 3326171,
  "accepted_disks": [
   {
    "disks": [
@@ -56,15 +56,15 @@
   },
   {
    "path": "scene.js",
-   "size": 14265,
-   "sha256": "a73086b2681f173676f40588ea7487a31ed116dc77761f00b6289114017b8b5e",
+   "size": 14256,
+   "sha256": "7717b738fc4dcf3701205521263f2df3158c3e55c9f9496abee8906b7e1d35e1",
    "derived": false,
    "sealed": false
   },
   {
    "path": "sealed/engine.wasm.sealed",
-   "size": 2995422,
-   "sha256": "cb9c1b941a9f8cbbda3575d116089a72b372a35ef8a74a819ff03dc27fb6fd24",
+   "size": 2995739,
+   "sha256": "7518dfaa5327aaed596d1685010500ad3074b3f075f2bd5c583ee63058027827",
    "derived": true,
    "sealed": true,
    "note": "game code translated 68000 -> C -> WASM (Emscripten, ASYNCIFY), sealed with --gzip"
@@ -72,7 +72,7 @@
   {
    "path": "sealed/loader.js.sealed",
    "size": 3035,
-   "sha256": "e80d5bfa5feb14338ebb592f5e61d55299109eb0383cbcc79e6e0442f16ba934",
+   "sha256": "7bb9c25273db78431b4e4c9961408d3528fe29dfbef58db281938e3924d243cd",
    "derived": true,
    "sealed": true,
    "note": "boot chain: Atomik depacker and HUNK relocation measured from the game, sealed"
@@ -80,7 +80,7 @@
   {
    "path": "sealed/seal.json",
    "size": 739,
-   "sha256": "3091bba146bbc0b42c918475c73f38d5ddec9eb1137bca8b584a018e82426ebf",
+   "sha256": "0271d3f7a6a050efc87d084497caddca5e4df0291be0c81cc225805e0c574d91",
    "derived": false,
    "sealed": false
   },
@@ -92,9 +92,16 @@
    "sealed": false
   },
   {
+   "path": "shots/about.png",
+   "size": 168203,
+   "sha256": "27c2168fbf536dc15873f79d383ffaf5f252a326273c865011ac77c4f0c14d90",
+   "derived": false,
+   "sealed": false
+  },
+  {
    "path": "shots/enhanced.png",
-   "size": 23064,
-   "sha256": "adf8e13a0758da451b5129d99a156386dca2c7b8775a45a5b48d72b911791054",
+   "size": 23467,
+   "sha256": "1a404bbb8e5d73d3aa08bce6c673bca65efe71fcfaa77bef39ffc574a3831f13",
    "derived": false,
    "sealed": false
   },
