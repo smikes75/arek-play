@@ -92,13 +92,6 @@
    "sealed": false
   },
   {
-   "path": "shots/about.png",
-   "size": 169415,
-   "sha256": "68732ece6e6adb279d9cc4c5da65e8d68a85277f9ea0fe1f35c1ea970b680fd7",
-   "derived": false,
-   "sealed": false
-  },
-  {
    "path": "shots/enhanced.png",
    "size": 23064,
    "sha256": "adf8e13a0758da451b5129d99a156386dca2c7b8775a45a5b48d72b911791054",
