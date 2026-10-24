@@ -24,7 +24,7 @@
   "build": "emcc -Oz, ASYNCIFY, TRACEPC without COVER/BRK diagnostics (tools/build-present.py)",
   "web_core_wasm_bytes": 22119002
  },
- "total_bytes": 1743779,
+ "total_bytes": 1744430,
  "files": [
   {
    "path": "ABOUT.md",
@@ -77,8 +77,8 @@
   },
   {
    "path": "native-game.js",
-   "bytes": 76396,
-   "sha256": "24e829b8809f8f56bc221c3a661817c8aeb626d552edf5403bd36baadeac9434",
+   "bytes": 77047,
+   "sha256": "2bd56577ba1d2d8ebc6613545bd8eb8a93da880cc3393fbe4ef93594a6660b8a",
    "derived": false,
    "sealed": false
   },
@@ -106,7 +106,7 @@
   {
    "path": "sealed/native-core.wasm.sealed",
    "bytes": 1193772,
-   "sha256": "c0b886dea2732b8d7fda2313a4ca67b5b8a99224082c2b0608a4000c9b2101a8",
+   "sha256": "a1d5174475c9460849de73dcfdb777a47f8312052770e5b3688b6d04b0e22a3d",
    "derived": true,
    "sealed": true,
    "plain": "native-core.wasm, 9646531 B (sealed with --gzip)"
@@ -114,7 +114,7 @@
   {
    "path": "sealed/seal.json",
    "bytes": 584,
-   "sha256": "7397998330df883e94273335454833a69474f400614352a6e9d1054416261a9e",
+   "sha256": "f6d452afc65ab377710d86235490f7bca9e37cb7fd8f99f0668a657bde762c75",
    "derived": false,
    "sealed": false
   },

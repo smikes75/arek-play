@@ -6,6 +6,9 @@
     // prezentacni verze (present/index.html, docs/PRESENT): window.AB_PRESENT = { disks(), wasm(), levelEnd(), help(), tr(text) };
     // diskety vlozi navstevnik, jadro je zapecetene, jen level 1 (konec u vytahu, game over = znovu od zacatku), menu jen Display
     const PRES = window.AB_PRESENT || null, dummies = new Map(); let presRestart = false, presEnded = false;
+    // prezentace: start v rezimu Original, po 5 s hrani levelu (viditelny obraz, bez pauzy) prepnout do Vylepseno; jednou za nacteni
+    // stranky, E nebo menu to zrusi. presDemo = odehrane ms, -1 = vypnuto
+    let presDemo = PRES ? 0 : -1; const PRES_DEMO_MS = 5000;
     const $ = (id) => document.getElementById(id) || (PRES ? dummies.get(id) || dummies.set(id, document.createElement('input')).get(id) : null);
     const STORE_KEY = 'alien-breed-native-game-v1';
     const FRAME_MS = 568408 / 28375.16, CHIP = 0x80000, SLOWOFF = 0x80000;   // 20,0317 ms: PAL snimek vAmigy (313 radku), ne 20,0
@@ -437,6 +440,7 @@
             // terminalu Intex ~245 snimku, nebo cekani na disketu), bezi hra 16 snimku na snimek displeje, dokud se obraz neobjevi
             else if (blackRun > BLACK_HOLD) { for (let i = 0; i < 15 && blackRun > BLACK_HOLD; i++) step(); turbo = true; }
             else if (turbo) { turbo = false; AUDIO.pause(); }
+            if (presDemo >= 0 && cur && !cur.screen && !blackRun && lastNow && (presDemo += Math.max(0, Math.min(now - lastNow, 100))) >= PRES_DEMO_MS) setMode('enhanced');
             acc = now - stepClock;                                              // faze uvnitr snimku 0..20 ms od nominalniho casu kroku
         }
         lastNow = now;
@@ -601,10 +605,11 @@
         catch (e) { shell.message('Pozici nelze nahrát: ' + e.message); log('pozice: ' + e.message); }
     }
     function setMode(m) {
+        presDemo = -1;
         if (m === prefs.mode && !modeAnim) return;
         const now = performance.now(), from = shownVisual(now), fromMode = modeAnim ? (modeSample(now) && modeAnim.e < .5 ? modeAnim.fromMode : prefs.mode) : prefs.mode;
         const fromLook = lastLook ? { ...lastLook } : lookOf(fromMode), fromVp = modeAnim ? captureViewport() : viewport();
-        prefs.mode = m; savePrefs(); held.clear();
+        prefs.mode = m; savePrefs();   // held se nemaze: drzena sipka by po stisku E uz neprisla znovu (opakovani patri E) a hrac by stal
         const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const toVp = viewport(), zt = zoomFor(toVp, prefs.zoom), zf = zoomFor(fromVp, prefs.views[fromMode].zoom);
         if (running && !reduce) {
@@ -740,13 +745,13 @@
     function wbTestInfo() { const sz = screenSize(), S = scaleInfo.S; return Object.assign(screen.info(), { scale: S, dpr: scaleInfo.dpr, W: sz.w, H: sz.h, P: scaleInfo.crt.P, D: scaleInfo.crt.D, content: [sz.w * S, sz.h * S], backing: [canvas.width, canvas.height] }); }
     function wbTestPaint() { if (wbTest) { const sz = screenSize(); WBOBRAZ.testPattern(canvas, wbTest, sz.w, sz.h, scaleInfo.S); } }   // 'grey' | 'rows' | 'cols'
     window.wbObrazTest = {
-        set(mode, cfg) { $('intro').hidden = true; gameEl.hidden = false; prefs.mode = mode; for (const [k, v] of Object.entries(cfg || {})) if (VIEW_KEYS.includes(k)) prefs[k] = v; applyDisplay(); wbTestPaint(); return wbTestInfo(); },
+        set(mode, cfg) { presDemo = -1; $('intro').hidden = true; gameEl.hidden = false; prefs.mode = mode; for (const [k, v] of Object.entries(cfg || {})) if (VIEW_KEYS.includes(k)) prefs[k] = v; applyDisplay(); wbTestPaint(); return wbTestInfo(); },
         fill(kind) { wbTest = kind; gameEl.classList.add('no-vignette'); wbTestPaint(); return true; },
     };
     applyDisplay();
     if (PRES) {   // prezentace: nejdriv diskety (klic zapeceteneho jadra), pak jadro, start levelu 1 rovnou
         const msg0 = shell.message.bind(shell); shell.message = (m) => msg0(PRES.tr(m));
-        window.abg.present = async () => { await loadDisks(); await loadCore(); loadSeed(); start(); };
+        window.abg.present = async () => { await loadDisks(); await loadCore(); loadSeed(); if (presDemo >= 0) { prefs.mode = 'original'; applyDisplay(); updateControls(); } start(); };
         window.abg.restart = restart;
     } else (async () => { try { await loadCore(); await loadDisks(); loadSeed(); } catch (e) { log('CHYBA: ' + e.message); $('status').textContent = 'Chyba: ' + e.message; } })();
 })();
