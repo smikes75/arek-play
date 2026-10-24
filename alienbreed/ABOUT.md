@@ -23,6 +23,12 @@ Claude (Anthropic, Claude Opus 5.5) in Claude Code, over four days (20–23 Octo
 - smooth camera and object motion between the game's 50 Hz frames (60, 120 or 144 Hz displays);
 - the HUD stretched across the width; CRT scanlines or grid, blur, whole-pixel scaling.
 
+## Like AREK? Support the project's next steps
+
+AREK is free and stays free. Every five euros goes into the next piece of it: more packers, a better recompiler, more tests, more games. Pay through Revolut.me (Revolut, card or Apple Pay): [https://revolut.me/stepan2vpo?amount=500&currency=EUR](https://revolut.me/stepan2vpo?amount=500&currency=EUR)
+
+![QR code: Revolut.me, 5 €](support-qr.svg)
+
 ## Links
 
 - [amiga-re-kit on the web](https://smikes75.github.io/amiga-re-kit/)

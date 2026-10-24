@@ -3,7 +3,7 @@
  "files": [
   {
    "path": "native-core.wasm",
-   "iv": "gmD7y196n6Ont0je",
+   "iv": "bSMoRzWAqUi1WDg2",
    "size": 9646531,
    "sha256": "ba6fc387761a941c82ed86a5f757cde5e7cfb272d1ff8f1bee025c244b135595",
    "encoding": "gzip",
@@ -16,8 +16,8 @@
     "af8ef14cf9729d9d41ec5a6705c4b4342ae9844db33ea5bb6cd91ff39a3175b6",
     "4b782994d649132d1d03c66d84f708ad42fecaf5e49dd5e28e646d2e51626961"
    ],
-   "iv": "zNvIqMswqud1iX9Q",
-   "wrapped": "cK6nU5AFQd2drnH+vlZu5lOXhDU9cyxt9kt6nXvL85o0S03iKXD17CqH1rwpchYG",
+   "iv": "WK7tl/UEvHOWxX6X",
+   "wrapped": "nSxVkKHlp/qQjeLP4wahNhEuA0FBh5SiblN8GNQSFU+g376J+svNRD8lnktCCrmz",
    "label": "Fairlight 2-disk"
   }
  ]

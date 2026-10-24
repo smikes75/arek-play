@@ -65,9 +65,10 @@
         } catch (e) { /* bez ulozeni */ }
     }
 
-    // ---- obrazovka o projektu: ABOUT.md (nadpisy, odstavce, odrazky, **tucne**, [odkaz](url), `kod`) ----
+    // ---- obrazovka o projektu: ABOUT.md (nadpisy, odstavce, odrazky, **tucne**, [odkaz](url), ![obrazek](soubor.svg|png), `kod`) ----
     function md(text) {
         const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>')
+            .replace(/!\[([^\]]*)\]\(([\w.-]+\.(?:svg|png))\)/g, '<img src="$2" alt="$1">')   // jen soubor vedle stranky
             .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
         const out = []; let list = false, para = [];
         const flush = () => { if (para.length) { out.push('<p>' + inline(para.join(' ')) + '</p>'); para = []; } if (list) { out.push('</ul>'); list = false; } };
@@ -88,7 +89,14 @@
     async function showAbout() {
         if (!aboutHtml) aboutHtml = fetch('ABOUT.md').then((r) => r.text()).then(md).catch(() => '<p>Level 1 complete.</p>');
         $('help').hidden = true; $('about').hidden = false; $('again').focus({ preventScroll: true });   // okno hned, text po stazeni (na webu chvili trva)
-        $('about-text').innerHTML = await aboutHtml; $('about').scrollTop = 0;
+        const box = $('about-text'); box.innerHTML = await aboutHtml; $('about').scrollTop = 0;
+        // oddil s obrazkem (podpora s QR) do bocniho sloupce: na sirokem okne viditelny bez rolovani, na uzkem zustane v textu
+        const img = box.querySelector('p > img');
+        if (img) {
+            let h = img.parentElement; while (h && !/^H\d$/.test(h.tagName)) h = h.previousElementSibling;
+            if (h) { const aside = document.createElement('aside'); aside.className = 'support'; h.before(aside);
+                for (let e = h; e && (e === h || !/^H\d$/.test(e.tagName));) { const n = e.nextElementSibling; aside.append(e); e = n; } }
+        }
         $('status').textContent = 'Level 1 complete.';
     }
     function toggleHelp(show) { const h = $('help'); h.hidden = show === undefined ? !h.hidden : !show; if (!h.hidden) $('help-close').focus(); else $('screen').focus(); }

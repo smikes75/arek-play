@@ -24,12 +24,12 @@
   "build": "emcc -Oz, ASYNCIFY, TRACEPC without COVER/BRK diagnostics (tools/build-present.py)",
   "web_core_wasm_bytes": 22119002
  },
- "total_bytes": 1699140,
+ "total_bytes": 1743779,
  "files": [
   {
    "path": "ABOUT.md",
-   "bytes": 1964,
-   "sha256": "f0f533ab958a5cacbb1db392b1d5897b9597a9dab88686409f9e8544454f2bae",
+   "bytes": 2361,
+   "sha256": "709bcda6191bd7cbbec08b8ed4756a31c97101789c62f825b341231aaf64321d",
    "derived": false,
    "sealed": false
   },
@@ -42,8 +42,8 @@
   },
   {
    "path": "index.html",
-   "bytes": 6455,
-   "sha256": "e2188050af974ec8c5ef2db3ed2c8af282c822006fd195b4963627d40984edf0",
+   "bytes": 7056,
+   "sha256": "d3211f843baff9b389d2eaae0d09aa26ce751ba57e73a7205b5b4ded1d11f6a8",
    "derived": false,
    "sealed": false
   },
@@ -91,8 +91,8 @@
   },
   {
    "path": "present.js",
-   "bytes": 9675,
-   "sha256": "bfcad9e1a3fb1f72a2793a03af103a9ffe73c36935402430e62da88b683abdd5",
+   "bytes": 10409,
+   "sha256": "b8cc64df794ae18f00e42acb420562f0de6a0a3d5b1690e1e539b40634b5d287",
    "derived": false,
    "sealed": false
   },
@@ -106,7 +106,7 @@
   {
    "path": "sealed/native-core.wasm.sealed",
    "bytes": 1193772,
-   "sha256": "fd275699faca928c2e088b0c0f0b5e095f1b50b1d5d8a9d12601b6cb53785bef",
+   "sha256": "c0b886dea2732b8d7fda2313a4ca67b5b8a99224082c2b0608a4000c9b2101a8",
    "derived": true,
    "sealed": true,
    "plain": "native-core.wasm, 9646531 B (sealed with --gzip)"
@@ -114,7 +114,7 @@
   {
    "path": "sealed/seal.json",
    "bytes": 584,
-   "sha256": "c4063bb84caad96ffe20245e57cfc23e9e4c1c84f6f198d969f0d5fb02af942a",
+   "sha256": "7397998330df883e94273335454833a69474f400614352a6e9d1054416261a9e",
    "derived": false,
    "sealed": false
   },
@@ -127,8 +127,8 @@
   },
   {
    "path": "shots/about.png",
-   "bytes": 176544,
-   "sha256": "70f19c682e5696c0f80ad213e513005e70408899788b53a23851d3a178327b07",
+   "bytes": 217393,
+   "sha256": "cbe0a399db975e120a71dc1b4e408e1e8c494f58c15b2b1a3daf29b51608ef1b",
    "derived": false,
    "sealed": false,
    "screenshot": true
@@ -148,6 +148,13 @@
    "derived": false,
    "sealed": false,
    "screenshot": true
+  },
+  {
+   "path": "support-qr.svg",
+   "bytes": 2058,
+   "sha256": "41bada59c244b1449f72eb3227de3eb0e04ad9a372b5755f6fcf5e8e7aa8d8e8",
+   "derived": false,
+   "sealed": false
   },
   {
    "path": "wb-menu.js",
