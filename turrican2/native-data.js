@@ -126,6 +126,24 @@ const NativeData = (() => {
     }
     // Files of the catalog on disk 2 (MUS4, L4-2, L5-1, MUS5, L5-2, EDAT).
     function onDisk2(disk1, name) { const e = catalog(disk1).find(e => e.name === name); return !!e && e.disk === 2; }
-    return {unpack, catalog, load, word, long, diskNumber, onDisk2};
+    // The game's content for the presentation's payload key (arek 0.5.12 seal): the files the
+    // rebuild reads from disk 1, unpacked by load(), in this order (sorted by name), each as the
+    // ASCII header "NAME\0SIZE\0" (SIZE in decimal) and its bytes. MAIN's 8 bytes at 0x50fc - the
+    // place a crack puts its trainer hook ([L]EGEND: jsr $7fee0, nop; docs/LOADER.md 4) - count as
+    // zeros, so neither a bootblock, a cracktro, unused sectors nor that hook change the key.
+    const PAYLOAD = ['IDAT', 'INTR', 'IP00', 'IP01', 'IP02', 'IP03', 'IP04', 'IP05', 'IP06', 'IP07', 'L1-1', 'MAIN', 'MUS0', 'MUS1'];
+    function payload(disk1) {
+        const parts = [];
+        for (const name of PAYLOAD) {
+            let data = load(disk1, null, name);
+            if (name === 'MAIN') { requireOK(data.length > 0x5104, 'MAIN zkraceny'); data = data.slice(); data.fill(0, 0x50fc, 0x5104); }
+            const head = name + '\0' + data.length + '\0';
+            parts.push(Uint8Array.from(head, c => c.charCodeAt(0)), data);
+        }
+        const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+        let o = 0; for (const p of parts) { out.set(p, o); o += p.length; }
+        return out;
+    }
+    return {unpack, catalog, load, word, long, diskNumber, onDisk2, payload, PAYLOAD};
 })();
 if (typeof module !== 'undefined') module.exports = NativeData;

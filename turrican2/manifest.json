@@ -1,13 +1,19 @@
 {
  "game": "Turrican II",
  "part": "world 1-1 (the first level)",
- "kit": "arek 0.5.11 (decoder 7370b196a768, recomp 37c92b661db1)",
- "wb_obraz_sha256": "371219df825df98c590a6e1473338738ff2c2d8c45f8c6ed32788bf32b06bdf5",
- "wb_seal_sha256": "f70cfbde38d55233f79988f4b3afa6187358f939eb39250882dc8e3f57f97fa4",
+ "kit": "arek 0.5.12 (decoder 7370b196a768, recomp 37c92b661db1)",
+ "wb_obraz_sha256": "9eda0e23f6e5f21e4af82db90d501230de416ddedbbe23a1de7fa01a715f66ba",
+ "wb_seal_sha256": "519f83ff16fbd7f3048df3154da5c5d0912058e66f7112fd15f592be905d1912",
  "accepted_disks": [
   {
    "name": "Turrican II disk 1, the [L]EGEND release (TURRI2-1.ADF)",
    "sha256": "98b0f313944a0bcfe84d3c1ae516a2fae8ad0ad2868fea8d20a111c8270ac932"
+  }
+ ],
+ "accepted_contents": [
+  {
+   "name": "any disk 1 with the same game files",
+   "id": "3668a7dc4db91181cb74708d1b7491a13843476abd5baa20fd473bde72e43e15"
   }
  ],
  "derived_sources": [
@@ -53,33 +59,33 @@
   "native-sound.js",
   "native-music.js"
  ],
- "size_bytes": 556570,
+ "size_bytes": 563000,
  "files": [
   {
    "path": "ABOUT.md",
-   "size": 1706,
-   "sha256": "331af959877eb8d1234611b588c6866e82570a1b088280d77cf0130d42e5ec09",
+   "size": 1816,
+   "sha256": "f88056e77ecf1385fada04d1f972a90e7dd68e207ef2d6ca2d01990e38acd482",
    "derived": false,
    "sealed": false
   },
   {
    "path": "README.md",
-   "size": 2829,
-   "sha256": "585ed9ad293f34c3d305329b4b8d239d52f9fe4a3b57a73c9459abd29040aea8",
+   "size": 4414,
+   "sha256": "db61ccc620f4930d6c70af403df5c4e5ef02784ddd0ca36c3d2a5431c40d408b",
    "derived": false,
    "sealed": false
   },
   {
    "path": "TESTS.md",
-   "size": 2225,
-   "sha256": "ec00f0d77def73a6f0fa622bbd4f68bdf497ecb440d5a59ae06bac7a00851c9b",
+   "size": 2713,
+   "sha256": "056fd6057beeb22714a3da3a3542d2fcd40caf291e6185117c35f42473c81fd7",
    "derived": false,
    "sealed": false
   },
   {
    "path": "index.html",
-   "size": 10532,
-   "sha256": "bc9b3d4beee275a093f66b20b10d2ce8f66ef89cbd7eba2b64854eb52dbab019",
+   "size": 10669,
+   "sha256": "507f9e3e7da8a39526763b6296508e913747f600bcc2062283923121c912b092",
    "derived": false,
    "sealed": false
   },
@@ -92,8 +98,8 @@
   },
   {
    "path": "native-data.js",
-   "size": 7313,
-   "sha256": "ef867c34f636adb534c2a6ce3eb7d7f5a5af5dd688140cd3f946721143f4ddf1",
+   "size": 8555,
+   "sha256": "7f249444be9c30cf55cd2c62599c01b95232c64d1ce11ee07283c5c99dae59ac",
    "derived": false,
    "sealed": false
   },
@@ -134,302 +140,302 @@
   },
   {
    "path": "present.js",
-   "size": 13136,
-   "sha256": "5ec787556a5993794e221d74371a7d58df23bfc69f8b900b8f5089a1ca3f418b",
+   "size": 14073,
+   "sha256": "cb8851ac74bf6aaea77fdc376d83dcdd1b3854aced8b0912bdb63f58b6777cbe",
    "derived": false,
    "sealed": false
   },
   {
    "path": "sealed/native-animation.js.sealed",
    "size": 717,
-   "sha256": "9a66325f8dd4ba1c7338aab3b97153bb546f5cd014b89f7130f64b0ead9371a8",
+   "sha256": "c07d44f7ebec03ea8ebc8d4821311fbed522fb018abb73e1a4bb579c50bf91d7",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-app.js.sealed",
    "size": 20184,
-   "sha256": "8b3739dede639fd0db1607bcc81ab9e438e7093073000858a5fc0fae5efef2db",
+   "sha256": "bc38b0c949b6117d1bee2359ab7de0784cad5729e5e2e74477467b01f70fe290",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-boss21.js.sealed",
    "size": 4957,
-   "sha256": "f0434e948f44ff2e7306e00f9d7033543d81830fb24d5f35b6b59852f80a8a9d",
+   "sha256": "e51e77477a633dae0f08cbb650e02bff6132b37a5f82f59e4fc35c50743ec5ae",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-boss22.js.sealed",
    "size": 4729,
-   "sha256": "82cc3e3b270df89c4ac34023a80b2e25553c213a5632af926eb16ddafbe06390",
+   "sha256": "5fdf297e98bcf81c9b51ca37a7b7b56a41a1d72e320c261cc548b44af73b8a4d",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-boss41.js.sealed",
    "size": 4873,
-   "sha256": "17797535982f8b86c082e34f8ab0b066fbe1551955d9d37abf4a6badcbe34e78",
+   "sha256": "55c68ef41bb7c5c1c512b13d875bf1dbbdbac46501361a299eebac3a62ae27b3",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-boss52.js.sealed",
    "size": 6719,
-   "sha256": "cdd93945b5f8b935b634f44c076abd8e28f5bafdaa1f42b76c353e334df40059",
+   "sha256": "517da6e9126f12a9fc0684997d438443439d6248a1a45a15a40bc71ca4ba96c0",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-bosses.js.sealed",
    "size": 5371,
-   "sha256": "84d4c6066b2788e9675434cd370fd735715b0c2fde2648f6619f3932202c4240",
+   "sha256": "66bf5840f173a1cbbf20da5317d556c50b68cbb7078c65d08271c614d2b3a48a",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-camera.js.sealed",
    "size": 1637,
-   "sha256": "e15861dabac33fac4977078ff3550290716e5b8fabec8869ec3e5b81dc0997e6",
+   "sha256": "42aa605f8286eb6543af612eff80c73cd88252275980a8ffca9be81ea29aff46",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-campaign.js.sealed",
    "size": 2013,
-   "sha256": "66cf08231e8d7797ee2f588b76009a9b931f3d6d10aa79ba85be7079e2fe634c",
+   "sha256": "38356ff4f6d567fb03fdd68aafd2e8b971983fa0ef0b177ecd117e89e3032fc2",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-carriers.js.sealed",
    "size": 1360,
-   "sha256": "992eb8d08e4aca1ff30858ef1d7a0d6ba9fda0523b74b6404adf988fe039cd81",
+   "sha256": "6e82e0a4f699a63489eb549c26f4b923733a260edbcf365671fc32d93489d9c9",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-combat.js.sealed",
    "size": 28608,
-   "sha256": "ae35bde8a54596eaa08865332234078f659e15a31e5e6d219a2fd0f329cd0667",
+   "sha256": "de7722c7746ecd080dca40568f2e7b5e7eb425e8ca22b420c4c30e6fce7dbf85",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-dragons.js.sealed",
    "size": 2535,
-   "sha256": "aeab91762813a535f9f8b4fd3753cff7c83b940700f63a711d801ba8eac2b98e",
+   "sha256": "794265d94aa2a5d4bd3b4f1e8c153a107125e52c4e69fb47bd891f63cab32159",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-ending.js.sealed",
    "size": 1884,
-   "sha256": "2359bdc83275cf478db612fb92fe2525a4e79c39fae3e4461e4b988ad7406d5f",
+   "sha256": "40542eabb6e0f52bb470d51493a20facf1b2e3007f313ea8f7389e95b06e302b",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-enemies.js.sealed",
    "size": 3224,
-   "sha256": "2ddc3b3a5cf275add0c62b91e93958a9e92346cefbf189a51c77214eff58e6f0",
+   "sha256": "31f1080695c601bd375ecc849dadfb1c7845be1de905819a08e780b7e3e34e41",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-finale.js.sealed",
    "size": 5372,
-   "sha256": "7882a7843923de7b6e07189a72ffa29f822f7189161692c32f3606c2fc00d817",
+   "sha256": "89133e53d7afc9f50aa4912ac90663aae84c90a7d60a909baf683ab70b669e4b",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-hud.js.sealed",
    "size": 3243,
-   "sha256": "33ee8f4f0ddee7259bb4146bccfd193cdb294f6cd3efc82e22ed81f90718a7d6",
+   "sha256": "ab59390e9829975f31fd790536c4eae5a915d3a7a0f046c4aa053e1675171a11",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-intro.js.sealed",
    "size": 3883,
-   "sha256": "12a7f9ed25e754d6ea120bd7c24ef263b9f105f3d4bc1ef23aec04c5b9a4fa5d",
+   "sha256": "98d227adf956f2b3571307cc92631f94c5bb090d57349b081fd6a936457f8e4f",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-level.js.sealed",
    "size": 12987,
-   "sha256": "fe0d4b2e7db1ff087b8084637c2c88bb859e68489fb3e0114d3ca39131eadf99",
+   "sha256": "989a0964d25512f8d55c3694875d87e789f997f56b93f169f5ba13f1136f9a5f",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-level12.js.sealed",
    "size": 4197,
-   "sha256": "559a20e92ffe4877eaba9375601ac1da5f8a9b8e65a5ff0d57635a87dc8bb1c8",
+   "sha256": "3bc4031f81dc47cc65bc41a27caa8c998ddfa34f05060a71339a4b42e4fc1cce",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-level22.js.sealed",
    "size": 7863,
-   "sha256": "af9891eff1c9c371ffb956f6eb0e9eb99b010ee05cde7c32357ede157ac2c173",
+   "sha256": "e6d019973c0ec08ece4fbc916190302670ae128d9ee89bfc03eca734d9ffa4ef",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-level31.js.sealed",
    "size": 4953,
-   "sha256": "2af9252d5b8a65e4d0d7466cc863a19d2828ca637505a71a322176a4abbd6a16",
+   "sha256": "d37437f0de31310268d3983f14c2fbab29554a9c2078856c5e0a6a65061d22bf",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-level32.js.sealed",
    "size": 7528,
-   "sha256": "685b4436732f56ce784a8b418ac59fedd334c1847afa39e3bd9f2f14e57e1bae",
+   "sha256": "f273f537231e218e11d9478fc661bfdc4d84f26e35f66195f09a841c8731b1d7",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-level33.js.sealed",
    "size": 5230,
-   "sha256": "4b4c5770894759e6fdf60e68fc943e7f4cc956f3ef6f893e8059bcd5eee7c893",
+   "sha256": "24880e87e23e21334a8398e48a0efe966e3ce82f3df8caea403050896cc8fb9b",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-level42.js.sealed",
    "size": 5036,
-   "sha256": "77866fd21956297351e1eb041b65c78677d3fa59983da6bedd0665a91d6839fa",
+   "sha256": "141c167fd12d3ed156d6fb944f27c6351d3212f9d42c4db731ca1af6257dac41",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-level51.js.sealed",
    "size": 5819,
-   "sha256": "d0f49a1098e83c34491a3f317c2f3fe0cf2c9d3a141f26d8a7bced87c2be5719",
+   "sha256": "a1ddfd690c55812dd2a6385fc4d5fe3eba1451e0548363cf4a5e10a412c22fae",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-level52.js.sealed",
    "size": 4765,
-   "sha256": "38cb3b0c06cee2349e4c0f4d2160847a1979aa824a859edc8611b42a657f1933",
+   "sha256": "0a4230fcd22f37aa06abfe4403256589e053a7dd5fe62375a90eaa6664a0baf1",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-loot.js.sealed",
    "size": 2772,
-   "sha256": "1ea3d97c51e188bcf99307139e2e3debfb11057051589f80542b29c7691fe50c",
+   "sha256": "2c1fd8a4d1952b631c2c60318a56ca15c34cc1e3fee50d30e44dbc36515146c8",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-music.js.sealed",
    "size": 1780,
-   "sha256": "88859561b00e7faf60acba32a54009acc0185484599284511a45cc8d266e8c1f",
+   "sha256": "bfc59ce6887cb34b6e85c08bd37f8bc27f6e8d80102d5d0c7c7451308cff7370",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-player.js.sealed",
    "size": 3472,
-   "sha256": "80a6cc3bcfd279c2a5ba1bb614a91b2bb39e3e395feab5da1d14e45699bf2238",
+   "sha256": "896e5488a321bdb09f56542a30be8fa3011d13ae90fec8befa2df0f7c8d12243",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-robot.js.sealed",
    "size": 4605,
-   "sha256": "2b5ddad9a96eceaedd073fac1760effaf3c75262f70483ee438158b5c49f4534",
+   "sha256": "131aac461f5d2caf33a86c563e1e9b4a21157e705534ec9883a8102af1133ded",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-ship.js.sealed",
    "size": 5331,
-   "sha256": "f19cf881aec7e3ef23ea886e22ccd9f38325c51a5c1fd2c359c373ad5e6eab5b",
+   "sha256": "fefeeaab2fe734135d3a356421a0846c093856f1cfb82cb036cf942f5b7a875c",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-sound.js.sealed",
    "size": 3924,
-   "sha256": "e6d2be98a4ebb179a0a1fc7a275f6ee32671086a788c596c166c27b562938182",
+   "sha256": "fe3455435a2380ba4cb3a8dd83a7b9b29c2a22de95f8dcd998fc005935b8192f",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-store.js.sealed",
    "size": 3662,
-   "sha256": "57bbc0d99a8c010f39474d1aa9fb38493e3d2d5fa9a955d263b56c26751877dd",
+   "sha256": "ce980b164a9a2199c6d2f633a16e3c010c6f1d64c0117a116b21306370516783",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-super.js.sealed",
    "size": 1041,
-   "sha256": "11d9484692d06b35dc7f9d0236074c0990c22ca3d6189768acea9bd14c13894a",
+   "sha256": "2c7ed8bb12fc55464f9d65d10d582d8280a6c31adf834371e4c2a6b39104f467",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-title.js.sealed",
    "size": 7932,
-   "sha256": "c8eaf2b928ecb6117b0d8bb824b6b8a555a9307991944700c83a2c74fdab0aaa",
+   "sha256": "9e015c66c781795703191485b07a6b8337a1bb3ed5dc6886807dff717a9a080b",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-video.js.sealed",
    "size": 3954,
-   "sha256": "193c47af059a7c7b971a2799a700b634285287de21af47f4bbff3a82183bfca9",
+   "sha256": "12e9f60c05d32ee4bd731f7620b542f9200e9f2319465d513f98b60bd7008ab6",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-view.js.sealed",
    "size": 3112,
-   "sha256": "2f824ef4200cd6beeaceb147dd40c8bd3fc45495c836803b894b819981dd603b",
+   "sha256": "c9ebdf4df1aa61300be218ed02d886bbbbeba6ac90d0c39000fdabceb60bb9ec",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-weapons.js.sealed",
    "size": 5224,
-   "sha256": "35f87cc10bdfc459cbcb5a998935293f2496a5bb89622380c625eb71053d4586",
+   "sha256": "6e0b85dfed35cd630e7951b69a73c23b2d7f598cffb4c12c40c1b7b81c82960a",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-world.js.sealed",
    "size": 3498,
-   "sha256": "7dfa39d19209b7483664c079e1076ba08b6ce236cd567df4aa2eaa5267bd98bb",
+   "sha256": "d4254f276c947ecbe4debed02023127a1256156d69770d6bdaecef8c52482e30",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-world2.js.sealed",
    "size": 6144,
-   "sha256": "db0d805650705ade7c849e233c8323c2953f885153d63f4d6956badabdb07b5f",
+   "sha256": "8218efbf86bd6c569b2f683fe5e34d8383ec8d62e334e8393ee2a578bbe2853d",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/native-world4.js.sealed",
    "size": 3874,
-   "sha256": "3a84043e75a005b210ad102d5d5dfaab3d193fc663397cdff23bac0651607cb9",
+   "sha256": "38e95ea8a25971c502f49e207d621d254f6376876a2dd68769adb44a060eda23",
    "derived": true,
    "sealed": true
   },
   {
    "path": "sealed/seal.json",
-   "size": 8889,
-   "sha256": "03295b5800982a76d7ff0912472d6d0360a2e16846a985256557bec8922b1989",
+   "size": 9141,
+   "sha256": "f0e4071de210dda9c0885cef70f2fce3d082dfc6f4fe4537ae75b6874561584b",
    "derived": false,
    "sealed": false
   },
@@ -481,15 +487,15 @@
   },
   {
    "path": "wb-obraz.js",
-   "size": 11815,
-   "sha256": "371219df825df98c590a6e1473338738ff2c2d8c45f8c6ed32788bf32b06bdf5",
+   "size": 11954,
+   "sha256": "9eda0e23f6e5f21e4af82db90d501230de416ddedbbe23a1de7fa01a715f66ba",
    "derived": false,
    "sealed": false
   },
   {
    "path": "wb-seal.js",
-   "size": 3927,
-   "sha256": "f70cfbde38d55233f79988f4b3afa6187358f939eb39250882dc8e3f57f97fa4",
+   "size": 5467,
+   "sha256": "519f83ff16fbd7f3048df3154da5c5d0912058e66f7112fd15f592be905d1912",
    "derived": false,
    "sealed": false
   }

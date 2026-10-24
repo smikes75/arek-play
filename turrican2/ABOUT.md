@@ -6,8 +6,9 @@ Amiga, 1991 · Factor 5 · Rainbow Arts.
 
 The first level of a rebuild: the game's own 68000 code rewritten to JavaScript, routine by
 routine, with the graphics, maps and music read from your disk. It is not an emulator. The ported
-code is sealed on this page and opens only with an accepted disk (so far the [L]EGEND re-release of
-disk 1; an original retail disk is not yet verified).
+code is sealed on this page and opens only with an accepted disk 1: the [L]EGEND re-release, or
+any other version whose game files are the same byte for byte (the boot block, loader and intro of
+a crack do not matter); an original retail disk is not yet verified.
 
 ## Measured against the original
 

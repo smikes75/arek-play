@@ -15,7 +15,16 @@
         li.textContent = d.name + ' · sha256 ' + d.sha256;
         $('present-known').append(li);
     }
-    const say = (text, bad = false) => { $('present-message').textContent = text; $('present-message').classList.toggle('bad', bad); };
+    for (const c of config.contents || []) {           // the payload key: the game files, whatever disk carries them
+        const li = document.createElement('li');
+        li.textContent = c.name + ' · content id ' + c.id;
+        $('present-known').append(li);
+    }
+    const ISSUES = 'https://github.com/smikes75/arek-play/issues';
+    const say = (text, bad = false, link = null) => {
+        const m = $('present-message'); m.textContent = text; m.classList.toggle('bad', bad);
+        if (link) { const a = document.createElement('a'); a.href = link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = link; m.append(' ', a); }
+    };
 
     // ---- remembering the disk (IndexedDB, only with the visitor's consent) ----
     function db() {
@@ -45,14 +54,16 @@
             document.body.append(s);
         });
     }
-    async function openGame(bytes) {
+    async function openGame(bytes, payload) {
         const seal = await (await fetch(config.seal)).json();
-        const box = await WBSEAL.open(seal, [bytes]);          // throws when the disk has no key
+        // The disk itself first, then the game's content (NativeData.payload); throws when neither fits.
+        const box = await WBSEAL.open(seal, [bytes], payload ? { payload } : undefined);
         const text = async (p) => new TextDecoder().decode(await box.fetch(p, config.sealedBase));
         // The sound worklet as one module: the opened sound and music code, then the processor.
         const parts = [];
         for (const p of config.sound) parts.push(await text(p));
         parts.push(await (await fetch(config.worklet)).text());
+        window.presentKey = box.key;                          // { disks: [...] } or { payload: id } (tests)
         globalThis.NATIVE_WORKLET_URL = URL.createObjectURL(new Blob([parts.join('\n')], { type: 'text/javascript' }));
         for (const p of config.scripts) await addScript(await text(p));
     }
@@ -62,16 +73,19 @@
         busy = true;
         try {
             if (bytes.byteLength !== ADF_SIZE) { say('This is not a standard Amiga disk image (an ADF of 901120 bytes).', true); return; }
-            const [id] = await WBSEAL.ids([bytes]);
-            if (!config.disks.some((d) => d.sha256 === id)) {
-                say('Unknown disk version (sha256 ' + id + '). This page knows: ' +
-                    config.disks.map((d) => d.name + ' (' + d.sha256.slice(0, 16) + '…)').join(', ') + '.', true);
-                if (fromMemory) { await remembered('delete'); $('present-forget').hidden = true; }
-                return;
-            }
-            say('Disk accepted. Opening the game…');
+            let payload = null;
+            try { payload = NativeData.payload(bytes); } catch { /* not a Turrican II disk 1: only the disk key can fit */ }
             if (!loaded) {
-                try { await openGame(bytes); } catch (e) { say('The game cannot be opened with this disk: ' + e.message, true); return; }
+                say('Checking the disk…');
+                try { await openGame(bytes, payload); }
+                catch (e) {
+                    const [id] = await WBSEAL.ids([bytes]), content = payload ? await WBSEAL.payloadId(payload) : null;
+                    say('This disk version is not accepted yet. Disk sha256 ' + id + '; ' +
+                        (content ? 'game content id ' + content : 'no Turrican II disk 1 game files found on it') +
+                        '. You can report both in the arek-play issues:', true, ISSUES);
+                    if (fromMemory) { await remembered('delete'); $('present-forget').hidden = true; }
+                    return;
+                }
                 loaded = true;
             }
             if ($('present-remember').checked && !fromMemory) { await remembered('put', bytes.slice(0)); $('present-forget').hidden = false; }
