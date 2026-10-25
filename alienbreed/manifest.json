@@ -24,17 +24,17 @@
   }
  ],
  "core": {
-  "wasm_bytes": 9646531,
-  "wasm_gzip_bytes": 1193756,
+  "wasm_bytes": 11157244,
+  "wasm_gzip_bytes": 1327604,
   "build": "emcc -Oz, ASYNCIFY, TRACEPC without COVER/BRK diagnostics (tools/build-present.py)",
-  "web_core_wasm_bytes": 22119002
+  "web_core_wasm_bytes": 18113329
  },
- "total_bytes": 1751062,
+ "total_bytes": 1907930,
  "files": [
   {
    "path": "ABOUT.md",
-   "bytes": 2361,
-   "sha256": "709bcda6191bd7cbbec08b8ed4756a31c97101789c62f825b341231aaf64321d",
+   "bytes": 2739,
+   "sha256": "24043f653f1c864e213b2f135b4a7e719160004054a0284dbda4d9143641d81e",
    "derived": false,
    "sealed": false
   },
@@ -47,8 +47,8 @@
   },
   {
    "path": "index.html",
-   "bytes": 8360,
-   "sha256": "a481b82f0b8661457121614aeaa2032cdef2fad8fd640f34f9a5fb8513cff59b",
+   "bytes": 9076,
+   "sha256": "7a38f154a7422dea4c4a315db1b1636db821da242b39ea3054116360413212ff",
    "derived": false,
    "sealed": false
   },
@@ -68,8 +68,8 @@
   },
   {
    "path": "native-core.js",
-   "bytes": 18898,
-   "sha256": "4fabab2fcba7d0e611dee34ea56f6979ffb2d9d147d6a6378629bf2b6403a62d",
+   "bytes": 20414,
+   "sha256": "37ce637e4b30db8e1571f05a4a63d086bb1e9f0513390fb59c60b08f542a97a2",
    "derived": false,
    "sealed": false
   },
@@ -82,8 +82,15 @@
   },
   {
    "path": "native-game.js",
-   "bytes": 77047,
-   "sha256": "2bd56577ba1d2d8ebc6613545bd8eb8a93da880cc3393fbe4ef93594a6660b8a",
+   "bytes": 88071,
+   "sha256": "f1a2e495aa6195123db36a66a4d86d1e57d2c3547df9cfaf40d21369cfcb864a",
+   "derived": false,
+   "sealed": false
+  },
+  {
+   "path": "native-input.js",
+   "bytes": 3498,
+   "sha256": "e25edc6142c87c35182b086e59d315189cf2eaf4a9a2152632431d09c62ab0da",
    "derived": false,
    "sealed": false
   },
@@ -103,23 +110,23 @@
   },
   {
    "path": "render.js",
-   "bytes": 38969,
-   "sha256": "2f3ee1689b71b993bf422cd6180099d41f169818713ac08580103b50a375156a",
+   "bytes": 44856,
+   "sha256": "e83f644f27b2e856994260e320b89c73ad32846a44b8de0fc6dfb1c923369b44",
    "derived": false,
    "sealed": false
   },
   {
    "path": "sealed/native-core.wasm.sealed",
-   "bytes": 1193772,
-   "sha256": "8ea702fe795e1518bf42fe0eaee5072bb2140e5787fcefee63c0563b22f877b4",
+   "bytes": 1327620,
+   "sha256": "a2d3a9577d79ff53583e0774338e9deab6222b54913b1ad4a6e1496ae16e2ddd",
    "derived": true,
    "sealed": true,
-   "plain": "native-core.wasm, 9646531 B (sealed with --gzip)"
+   "plain": "native-core.wasm, 11157244 B (sealed with --gzip)"
   },
   {
    "path": "sealed/seal.json",
-   "bytes": 835,
-   "sha256": "cb972b2d6af7530c52ed0aa1be0136c14b4ab22cc9b81dfb2c3faba90b0af142",
+   "bytes": 836,
+   "sha256": "68422f753f10127c29332ef1929f4beaad332e1e2078aee5a61516b187063a79",
    "derived": false,
    "sealed": false
   },

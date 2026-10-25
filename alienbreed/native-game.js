@@ -22,9 +22,12 @@
     // bez ver 2 (pred 1.2): sdilene CRT a knofliky do obou rezimu, hodnoty rovne starym vychozim (CRT vyp, Original standardni, Vylepseno
     // rozmazani 24 %, Original bez rozmazani) prejdou na nove vychozi.
     const W0 = VIEWPORTS.orig.w;   // sirka vyrezu Originalu (293): zoom = sirka okna v nasobcich W0 (1.1)
-    const PREFS_VER = 2, KNOBS = ['brightness', 'contrast', 'saturation'];
-    const VIEW_DEFAULTS = { original: { ...WBOBRAZ.VIEW_DEFAULTS.original, crtShape: 'lines', smooth: false, brightness: 100, contrast: 100, saturation: 100 },
-        enhanced: { ...WBOBRAZ.VIEW_DEFAULTS.enhanced, crtShape: 'lines', smooth: true, brightness: 100, contrast: 100, saturation: 100 } };
+    // pomer pixelu PAL (jako Turrican a Superfrog): televize PAL vzorkuje ctvercove body 14,75 MHz, Amiga lores 7,09379 MHz -> lores pixel
+    // 14,75 / 14,1875 = 1,0397 krat sirsi nez vysoky. Jen zobrazeni; prezentace bez nej (kontrakt kitu = cele pixely na sirku i vysku)
+    const PAL_PAR = 14.75 / 14.1875;
+    const PREFS_VER = 2, KNOBS = ['brightness', 'contrast', 'saturation'], CHANNELS = ['red', 'green', 'blue'];   // CHANNELS: kanaly RGB 50-150 % (RENDER.setChannels)
+    const VIEW_DEFAULTS = { original: { ...WBOBRAZ.VIEW_DEFAULTS.original, crtShape: 'lines', smooth: false, par: false, brightness: 100, contrast: 100, saturation: 100, red: 100, green: 100, blue: 100 },
+        enhanced: { ...WBOBRAZ.VIEW_DEFAULTS.enhanced, crtShape: 'lines', smooth: true, par: !PRES, brightness: 100, contrast: 100, saturation: 100, red: 100, green: 100, blue: 100 } };
     const VIEW_KEYS = Object.keys(VIEW_DEFAULTS.original), OLD_DEFAULTS = { original: { crtDetail: 'standard' }, enhanced: { blur: 24 } };
     const DEFAULTS = { mode: 'enhanced', viewport: 'w448' };
     const CRT_DETAILS = WBOBRAZ.CRT_DETAILS, MODE_MS = WBOBRAZ.MODE_MS;   // prechod Original <-> Vylepseno, smoothstep
@@ -51,7 +54,9 @@
             o.crtShape = WBOBRAZ.CRT_SHAPES.includes(v.crtShape) ? v.crtShape : d.crtShape;
             o.smooth = typeof v.smooth === 'boolean' ? v.smooth : d.smooth;   // Original: vychozi vypnuto (meridlo), od 2026-10-22 lze zapnout rucne
             o.blur = num(v.blur, 0, 100, d.blur);
+            o.par = typeof v.par === 'boolean' && !PRES ? v.par : d.par;
             o.brightness = num(v.brightness, 50, 150, 100); o.contrast = num(v.contrast, 50, 150, 100); o.saturation = num(v.saturation, 0, 200, 100);
+            for (const k of CHANNELS) o[k] = num(v[k], 50, 150, 100);
         }
         return p;
     }
@@ -62,6 +67,10 @@
     const canvas = $('screen'), ctx = canvas.getContext('2d', { alpha: false }), gameEl = document.querySelector('.game');
     const logEl = $('log'), log = (t) => { logEl.textContent += t + '\n'; logEl.scrollTop = logEl.scrollHeight; };
     const held = new Set();
+    // gamepad a joystick (web/native-input.js): stav ctu v kazdem snimku displeje (i v pauze kvuli Start), do hry jde spolu s klavesnici
+    const PADS = typeof NativeInput !== 'undefined' ? new NativeInput.Gamepads() : null, PAD_KEY = 'ab-native-pad';
+    let PAD = PADS ? NativeInput.empty() : null;
+    try { const ps = JSON.parse(localStorage.getItem(PAD_KEY) || 'null'); if (PADS && ps && typeof ps === 'object') { if (/^(auto|\d{1,2})$/.test(ps.pad)) PADS.preferred = ps.pad; if (/^(auto|\d{1,2})$/.test(ps.fire)) PADS.fireButton = ps.fire; } } catch (e) { /* vychozi */ }
     const shell = new WbMenu.Shell($('shell') || document.querySelector('.wbshell'), { suspend: () => { held.clear(); paused = true; }, restore: () => { paused = manualPause; canvas.focus({ preventScroll: true }); } });
     let core = null, mem = null, memBase = 0, seedMeta = null, running = false, paused = false, manualPause = false;
     // zvuk: zapisy hry do Pauly po snimcich -> model cipu -> AudioWorklet (web/native-audio.js); predvolby spolecne pro oba rezimy
@@ -70,7 +79,7 @@
     const saveSound = () => { try { localStorage.setItem(SOUND_KEY, JSON.stringify(sound)); } catch (e) { /* bez ulozeni */ } };
     AUDIO.setEnabled(sound.on); AUDIO.setVolume(sound.volume);
     const unlockAudio = () => { if (sound.on) AUDIO.unlock().catch((e) => log('zvuk: ' + e.message)); };
-    let acc = 0, lastNow = 0, steps = 0, stats = { stepMs: 0, renderMs: 0, frames: 0, spritePixels: 0 };
+    let acc = 0, lastNow = 0, steps = 0, stats = { stepMs: 0, renderMs: 0, frames: 0, spritePixels: 0, screenSkips: 0, slowFrames: 0 };
     let stepClock = 0;   // nominalni cas posledniho kroku (performance.now ms): kroky v t0 + n * 20 ms, interpolace mezi nimi
     let scaleInfo = { S: 3, z: 3, dpr: 1 };   // S = pixely zarizeni na herni pixel, z = CSS px na herni pixel (S / dpr), zoom = sirka v nasobcich W0
     const screen = new WBOBRAZ.Screen(gameEl, canvas);   // vrstva CRT a zarovnani na cely pixel zarizeni (wb-obraz.js)
@@ -223,12 +232,12 @@
     const s16 = (a) => ((mem[a] << 8) | mem[a + 1]) << 16 >> 16;
     function joystick() {
         // JOY1DAT: bit 1 = vpravo, bit 9 = vlevo, dolu = bit 0 XOR bit 1, nahoru = bit 8 XOR bit 9 (zmereno: vpravo = 0x0003)
-        const r = held.has('ArrowRight'), l = held.has('ArrowLeft'), u = held.has('ArrowUp'), d = held.has('ArrowDown');
+        const g = PAD || {}, r = held.has('ArrowRight') || !!g.right, l = held.has('ArrowLeft') || !!g.left, u = held.has('ArrowUp') || !!g.up, d = held.has('ArrowDown') || !!g.down;
         let v = 0;
         if (r) v |= 0x0002; if (l) v |= 0x0200;
         if (d !== r) v |= 0x0001;           // bit0 = bit1 XOR dolu
         if (u !== l) v |= 0x0100;           // bit8 = bit9 XOR nahoru
-        const fire = held.has('KeyX') || held.has('ControlLeft') || held.has('ControlRight');
+        const fire = held.has('KeyX') || held.has('ControlLeft') || held.has('ControlRight') || !!g.fire;
         return { joy1: v, pra: (fire ? 0x7e : 0xfe) & (mouseDown ? ~0x40 : 0xff) };   // bit 6 = leve tlacitko mysi (port 1), cte ho titul a menu
     }
     let spaceDown = false, mouseDown = false;
@@ -246,7 +255,7 @@
         core._core_input(0, j.joy1, j.pra, 0, 0);
         // klavesnice hry (0xC21208 = surovy kod posledni klavesy): mezernik 0x40 (terminal Intex, obsluha typu 23 0xC08104),
         // pri pusteni kod uvolneni 0x40 | 0x80 (jinak by kod zustal a terminal se po odchodu otevrel znovu)
-        if (held.has('Space')) { mem[SLOWOFF + 0x21208] = 0x40; spaceDown = true; } else if (spaceDown) { mem[SLOWOFF + 0x21208] = 0xc0; spaceDown = false; }
+        if (held.has('Space') || (PAD && PAD.space)) { mem[SLOWOFF + 0x21208] = 0x40; spaceDown = true; } else if (spaceDown) { mem[SLOWOFF + 0x21208] = 0xc0; spaceDown = false; }
         const t0 = performance.now();
         wake(); steps++; objStep();
         AUDIO.frame(core, mem);
@@ -286,7 +295,7 @@
             // se vlozi z bufferu na sve misto, aby se nic neztratilo. Sloupec 0 pri posunu 14 a radky >= 236 (spodni orez hry) se nekontroluji.
             shown = shownObjects(steps);
             if (!modelBuf) modelBuf = new Uint8Array(WIN_W * WIN_H);
-            RENDER.renderWorld(worldState, mem.subarray(SLOWOFF, SLOWOFF + 0x80000), 0xc00000, camX - 3, camY + 68, WIN_W, WIN_H, modelBuf);
+            RENDER.renderWorld(worldState, mem.subarray(SLOWOFF, SLOWOFF + 0x80000), 0xc00000, camX - 3, camY + 68, WIN_W, WIN_H, modelBuf, true);   // atlas uz obnoven vyse
             if (shown) RENDER.drawObjects(shown.objs, mem.subarray(0, CHIP), camX - 3, camY + 68, WIN_W, WIN_H, modelBuf);
             const winX0 = Math.max(0, -RENDER.fineOf(cop)); let unknown = 0;
             if (!unkCol) unkCol = new Uint16Array(WIN_W); else unkCol.fill(0);
@@ -332,7 +341,7 @@
         }
         blackRun = isBlack(rgbaBuf, 16) && isBlack(spRgba, 16) && (!vp.hud || !hudRaw || isBlack(hudRaw, 4)) ? blackRun + 1 : 0;
         prev = cur;
-        cur = { n: steps, t: performance.now(), camX, camY, px: s16(SLOWOFF + 0x599e), py: s16(SLOWOFF + 0x59a0), pf: pfCanvas[pfIdx], sp: spCanvas[pfIdx], view, vp, objs, ghosts };
+        cur = { n: steps, t: performance.now(), camX, camY, px: s16(SLOWOFF + 0x599e), py: s16(SLOWOFF + 0x59a0), pf: pfCanvas[pfIdx], sp: spCanvas[pfIdx], view, vp, objs, ghosts, rgb: RENDER.channels() };
         stats.renderMs = performance.now() - t0; stats.frames++;
     }
     // obrazovka mimo level (modul Intex, prechody): cely snimek obecnym rendererem z copper listu (RENDER.renderCopperFrame, docs/RENDER.md 15),
@@ -341,15 +350,55 @@
     // scrState: svisle okno (DIW) jako klopny obvod hardwaru mezi snimky – terminal Intex pri startu nahodne posouva DIW a okno
     // zustava otevrene pres konec snimku (zmereno proti vAmize, docs/RENDER.md 15)
     const SCR = { l0: 26, h: 285, h0: 98, w: 358, xs: 2 }; let wbTest = null, unkCol = null, scrState = null, scrCanvas = null, scrCtx = null, scrRgba = null; const cregBuf = new Uint16Array(256);
+    // obrazovka mimo level: pamet vstupu posledniho nakresleneho snimku (registry, stav svisleho okna pred a po, kopie prectenych stranek)
+    let scrMemo = null, scrRgb = '';   // scrRgb: kanaly RGB, se kterymi je obrazovka nakreslena
+    const stCopy = (st) => ({ vOpen: st.vOpen, diw: st.diw && st.diw.slice(), ptr: st.ptr && st.ptr.slice() });
+    /** Kanaly RGB se zmenily: zobrazeny snimek znovu z tehoz stavu RAM (v pauze a v menu hra nebezi), hra se neposune. Obrazovka mimo
+     *  level: stav svisleho okna pred snimkem (scrMemo.pre) a tytez registry, po vykresleni je stav stejny jako po puvodnim snimku. */
+    function recolor() {
+        if (!cur || !mem || !core) return;
+        if (cur.screen) {
+            const m = scrMemo, st = scrState; if (!m || !m.pre || !st || m.st !== st) return;
+            Object.assign(st, stCopy(m.pre));
+            RENDER.renderCopperFrame(mem.subarray(0, CHIP), 0, ((m.creg[0x080 >> 1] << 16) | m.creg[0x082 >> 1]) >>> 0, m.creg, SCR.l0, SCR.h, SCR.h0, SCR.w, scrRgba, SCR.xs, st);
+            scrCtx.putImageData(new ImageData(scrRgba, SCR.w * SCR.xs, SCR.h), 0, 0); cur.rgb = scrRgb = RENDER.channels();
+        } else { const b = blackRun; capture(); blackRun = b; }
+        drawDirty = true;
+    }
+    const stKey = (st) => (st.vOpen ? 1 : 0) + '|' + (st.diw ? st.diw.join(',') : '') + '|' + (st.ptr ? Array.from(st.ptr).join(',') : '');
+    const sameU16 = (a, b) => { for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; };
+    function memoPages(st, before, black) {
+        const idx = []; for (let i = 0; i < st.pages.length; i++) if (st.pages[i]) idx.push(i);
+        const snap = new Uint8Array(idx.length * 4096); idx.forEach((p, k) => snap.set(mem.subarray(p * 4096, p * 4096 + 4096), k * 4096));
+        return { st, before, creg: cregBuf.slice(), idx, snap, black, after: { vOpen: st.vOpen, diw: st.diw.slice(), ptr: st.ptr.slice() } };
+    }
+    function samePages(m) {
+        const al = (mem.byteOffset & 3) === 0, s32 = al ? new Uint32Array(m.snap.buffer) : null;
+        for (let k = 0; k < m.idx.length; k++) {
+            const o = m.idx[k] * 4096;
+            if (al) { const c32 = new Uint32Array(mem.buffer, mem.byteOffset + o, 1024); for (let i = 0, j = k * 1024; i < 1024; i++, j++) if (c32[i] !== s32[j]) return false; }
+            else for (let i = 0; i < 4096; i++) if (mem[o + i] !== m.snap[k * 4096 + i]) return false;
+        }
+        return true;
+    }
     function captureScreen(t0) {
         for (let i = 0; i < 256; i++) cregBuf[i] = core._core_creg(i * 2);
         const coplc = ((cregBuf[0x080 >> 1] << 16) | cregBuf[0x082 >> 1]) >>> 0;
         if (!scrCanvas) { scrCanvas = document.createElement('canvas'); scrCanvas.width = SCR.w * SCR.xs; scrCanvas.height = SCR.h; scrCtx = scrCanvas.getContext('2d'); scrRgba = new Uint8ClampedArray(SCR.w * SCR.xs * SCR.h * 4); }
-        RENDER.renderCopperFrame(mem.subarray(0, CHIP), 0, coplc, cregBuf, SCR.l0, SCR.h, SCR.h0, SCR.w, scrRgba, SCR.xs, scrState || (scrState = { vOpen: false }));
-        scrCtx.putImageData(new ImageData(scrRgba, SCR.w * SCR.xs, SCR.h), 0, 0);
-        blackRun = isBlack(scrRgba, 16) ? blackRun + 1 : 0;
+        const st = scrState || (scrState = { vOpen: false }), before = stKey(st);
+        if (scrMemo && scrMemo.st === st && scrMemo.before === before && scrRgb === RENDER.channels() && sameU16(scrMemo.creg, cregBuf) && samePages(scrMemo)) {
+            // stejne vstupy (registry, stav okna, prectene stranky chip RAM) = stejny obraz: snimek se nekresli (obrazovky mimo level stoji)
+            st.vOpen = scrMemo.after.vOpen; st.diw = scrMemo.after.diw.slice(); st.ptr = scrMemo.after.ptr.slice(); stats.screenSkips++;
+            blackRun = scrMemo.black ? blackRun + 1 : 0;
+        } else {
+            const pre = stCopy(st);
+            RENDER.renderCopperFrame(mem.subarray(0, CHIP), 0, coplc, cregBuf, SCR.l0, SCR.h, SCR.h0, SCR.w, scrRgba, SCR.xs, st);
+            scrCtx.putImageData(new ImageData(scrRgba, SCR.w * SCR.xs, SCR.h), 0, 0); scrRgb = RENDER.channels();
+            const black = isBlack(scrRgba, 16); blackRun = black ? blackRun + 1 : 0;
+            scrMemo = memoPages(st, before, black); scrMemo.pre = pre;
+        }
         prev = null;
-        cur = { n: steps, t: performance.now(), screen: scrCanvas, module: core._core_module(), camX: 0, camY: 0, px: s16(SLOWOFF + 0x599e), py: s16(SLOWOFF + 0x59a0), objs: [], ghosts: [] };
+        cur = { n: steps, t: performance.now(), screen: scrCanvas, module: core._core_module(), camX: 0, camY: 0, px: s16(SLOWOFF + 0x599e), py: s16(SLOWOFF + 0x59a0), objs: [], ghosts: [], rgb: scrRgb };
         stats.renderMs = performance.now() - t0; stats.frames++;
     }
     function viewportOf(mode) { return VIEWPORTS[mode === 'original' ? 'orig' : (VIEWPORTS[prefs.viewport] ? prefs.viewport : 'w448')]; }
@@ -366,7 +415,8 @@
     function screenSizeOf(vp) { const H = hudOf(vp); return { w: vp.w, h: vp.h + H.top + H.bot }; }
     function screenSize() { return screenSizeOf(viewport()); }
     // ---- prechod Original <-> Vylepseno (Turrican ViewportTransition): jen kresleni, hra bezi dal beze zmeny ----
-    let modeAnim = null;   // { from: {x0,y0,w,h,z}, to: {...}, fromVp, toVp, start }
+    let modeAnim = null, drawDirty = true, drawnCur = null;
+    const MAX_STEPS = 2, TURBO_MS = 12;   // takt: nejvys 2 kroky hry na snimek displeje; zrychlene pauzy nejvys 12 ms prace na snimek   // { from: {x0,y0,w,h,z}, to: {...}, fromVp, toVp, start }
     const smoothstep = (t) => t * t * (3 - 2 * t);
     function shownVisual(now) {   // prave zobrazeny vyrez a zoom (i uprostred animace: otoceni z teto polohy)
         const s = modeSample(now); if (s) return s;
@@ -383,83 +433,116 @@
      *  zoomu vic sveta ve zhruba stejnem okne): S = round(zoom * W0 / W * dpr), do okna floor(fit * dpr), vzdy nejvys to, co se vejde. */
     // popisek zoomu cesky (wb-obraz 1.3 ma anglicka slova a desetinnou tecku)
     const zoomLabelCz = (...a) => PRES ? WBOBRAZ.zoomLabel(...a) : WBOBRAZ.zoomLabel(...a, { fit: 'do okna', limited: 'omezeno na', actual: 'skutečně' }).replace(/(\d)\.(\d)/g, '$1,$2');
-    function zoomFor(vp, zoomPref) {
+    function zoomFor(vp, zoomPref, par = 1) {   // par: pomer pixelu (obraz o tolik sirsi, do okna se pocita se zobrazenou sirkou)
         // do okna = nejvetsi meritko, ktere se vejde na sirku i vysku stage (jako index.html; drive jen sirka: Original do okna pretekal dolu)
         const dpr = window.devicePixelRatio || 1, sz = screenSizeOf(vp), st = $('stage');
-        const limit = Math.min(Math.max(200, st.clientWidth - 26) / sz.w, Math.max(150, st.clientHeight - 26) / sz.h);
+        const limit = Math.min(Math.max(200, st.clientWidth - 26) / (sz.w * par), Math.max(150, st.clientHeight - 26) / sz.h);
         const S = WBOBRAZ.deviceScale(zoomPref, W0, sz.w, dpr, limit);
         return { S, z: S / dpr, dpr, limit, zoom: S / dpr * sz.w / W0 };
     }
-    function lookOf(m) { const v = prefs.views[m]; return { mode: m, detail: v.crtDetail, shape: v.crtShape, on: v.crt ? 1 : 0, blur: v.blur, brightness: v.brightness, contrast: v.contrast, saturation: v.saturation }; }
+    function lookOf(m) { const v = prefs.views[m]; return { mode: m, detail: v.crtDetail, shape: v.crtShape, on: v.crt ? 1 : 0, blur: v.blur, par: v.par ? PAL_PAR : 1, brightness: v.brightness, contrast: v.contrast, saturation: v.saturation, red: v.red, green: v.green, blue: v.blue }; }
     /** Vzhled okna w x h hernich pixelu pri pixel CSS px na herni pixel (behem prechodu necele): filtr platna (knofliky, rozmazani
      *  0,8 herniho pixelu pri 100 %) a vrstva CRT pres obsah v pixelech zarizeni (Original perioda = herni radek, Vylepseno mrizka 2/3/4). */
     function applyLook(L, w, h, pixel, dpr) {
         canvas.style.filter = WBOBRAZ.filter(L, pixel);
-        scaleInfo.crt = screen.crt({ mode: L.mode, detail: L.detail, shape: L.shape, S: Math.max(1, Math.round(pixel * dpr)), dpr, w: WBOBRAZ.padded(Math.max(1, Math.round(w * pixel * dpr)), dpr), h: WBOBRAZ.padded(Math.max(1, Math.round(h * pixel * dpr)), dpr), on: L.on });   // vrstva = backing platna (1.3)
+        if (RENDER.setChannels(L.red, L.green, L.blue)) objImgCache.clear();   // kanaly RGB: tabulka barev, obrazky objektu se starymi barvami pryc
+        scaleInfo.crt = screen.crt({ mode: L.mode, detail: L.detail, shape: L.shape, S: Math.max(1, Math.round(pixel * dpr)), dpr, w: WBOBRAZ.padded(Math.max(1, Math.round(w * pixel * dpr * (L.par || 1))), dpr), h: WBOBRAZ.padded(Math.max(1, Math.round(h * pixel * dpr)), dpr), on: L.on });   // vrstva = backing platna (1.3)
         lastLook = L;
     }
     function applyDisplay() {
+        drawDirty = true;
         if (modeAnim) { updateControls(); return; }   // prechod: rozmer platna ridi draw, po dobehnuti zavola applyDisplay znovu
         const vp = viewport(), enhanced = prefs.mode === 'enhanced';
         // backing platna = presne pixely zarizeni (S cele), jinak se obraz prevzorkuje a posun 1,67 px na snimek displeje se laame na nestejne kroky
-        const sz = screenSize(), { S, z, dpr, limit, zoom } = zoomFor(vp, prefs.zoom);   // nevejde se do okna: mensi zoom, ale backing stale = pixely zarizeni
+        const par = prefs.par ? PAL_PAR : 1, sz = screenSize(), { S, z, dpr, limit, zoom } = zoomFor(vp, prefs.zoom, par);   // nevejde se do okna: mensi zoom, ale backing stale = pixely zarizeni
         // 1.3: backing = obsah W*S x H*S zaokrouhleny nahoru na krok rozvrzeni q (Chromium uklada rozmery po 1/64 CSS px: dpr 1,25 q 5,
         // 1,5 q 3), hra kresli do leveho horniho W*S x H*S, zbytek cerny; jinak se platno prevzorkuje (zdvojeny/zkraceny radek)
-        const bw = WBOBRAZ.padded(sz.w * S, dpr), bh = WBOBRAZ.padded(sz.h * S, dpr);
+        // PAL: backing o 4 % sirsi (zase cele pixely zarizeni), kresleni vodorovne natazene transformaci (draw), ne CSS (to by zdvojovalo sloupce)
+        const bw = WBOBRAZ.padded(Math.round(sz.w * S * par), dpr), bh = WBOBRAZ.padded(sz.h * S, dpr);
         if (canvas.width !== bw || canvas.height !== bh) { canvas.width = bw; canvas.height = bh; }
         // platno ma ramecek 1 px (box-sizing border-box): obsah = sirka - 2, proto +2, jinak by se backing prevzorkoval o 2 px
         gameEl.style.width = (bw / dpr + 2) + 'px'; canvas.style.height = (bh / dpr + 2) + 'px';   // vyska explicitne: aspect-ratio by u border-box zahrnul ramecek
-        scaleInfo = { S, z, dpr, limit, zoom };
+        scaleInfo = { S, z, dpr, limit, zoom, par };
         gameEl.classList.toggle('smooth', enhanced); gameEl.classList.remove('mode-changing');
         applyLook(lookOf(prefs.mode), sz.w, sz.h, z, dpr);
+        if (cur && cur.rgb !== RENDER.channels()) recolor();   // zobrazeny snimek se starymi kanaly (pauza, menu, stojici obrazovka)
         updateControls();
         screen.align();
     }
     function updateControls() {   // ovladaci prvky menu podle rezimu (i behem prechodu, platno pak ridi draw)
-        const vp = viewport(), enhanced = prefs.mode === 'enhanced', t = zoomFor(vp, prefs.zoom);
-        for (const k of KNOBS) { $(k).value = prefs[k]; $(k + '-value').textContent = prefs[k] + ' %'; }
+        const vp = viewport(), enhanced = prefs.mode === 'enhanced', t = zoomFor(vp, prefs.zoom, prefs.par ? PAL_PAR : 1);
+        for (const k of KNOBS.concat(CHANNELS)) { $(k).value = prefs[k]; $(k + '-value').textContent = prefs[k] + ' %'; }
         $('run-state').textContent = enhanced ? 'Vylepšeno' : 'Originál';
         $('mode-original').setAttribute('aria-pressed', String(!enhanced)); $('mode-enhanced').setAttribute('aria-pressed', String(enhanced));
-        $('view-mode-note').textContent = 'Zoom, CRT, rozmazání a ovladače monitoru platí pro režim ' + (enhanced ? 'Vylepšeno' : 'Originál') + '.';
+        $('view-mode-note').textContent = 'Celé nastavení obrazu platí pro režim ' + (enhanced ? 'Vylepšeno' : 'Originál') + '.';
         $('smooth').checked = prefs.smooth; $('smooth').disabled = false; $('blur').disabled = false;
-        $('zoom').value = prefs.zoom; $('zoom-value').textContent = zoomLabelCz(prefs.zoom, t.S, t.dpr, W0, screenSizeOf(vp).w) + ' · backing ' + t.S + '× (dpr ' + t.dpr + ')';
+        $('zoom').value = prefs.zoom; $('zoom-value').textContent = zoomLabelCz(prefs.zoom, t.S, t.dpr, W0, screenSizeOf(vp).w);
         for (const b of document.querySelectorAll('[data-zoom]')) b.setAttribute('aria-pressed', String(parseFloat(b.dataset.zoom) === prefs.zoom));
-        $('crt').checked = prefs.crt; $('crt-detail').value = prefs.crtDetail; $('crt-shape').value = prefs.crtShape; $('blur').value = prefs.blur; $('blur-value').textContent = prefs.blur + ' %';
-        $('display-status').textContent = 'Výřez ' + vp.w + ' × ' + vp.h + (vp.hud ? ' + HUD' : '') + ', plátno ' + canvas.width + ' × ' + canvas.height + ' px.';
+        $('par').checked = prefs.par; $('crt').checked = prefs.crt; $('crt-detail').value = prefs.crtDetail; $('crt-shape').value = prefs.crtShape; $('blur').value = prefs.blur; $('blur-value').textContent = prefs.blur + ' %';
+        $('display-status').textContent = 'Výřez ' + vp.w + ' × ' + vp.h + (vp.hud ? ' + HUD' : '') + ' · plátno ' + canvas.width + ' × ' + canvas.height + ' px zařízení, celé pixely ×' + t.S + (t.dpr !== 1 ? ' (dpr ' + t.dpr + ')' : '') + (prefs.par ? ', na šířku × 1,04 (PAL)' : '');
     }
+    function pollPad() {                   // gamepad: smery a fire bere step(), tady hrany Y (Original / Vylepseno) a Start (pauza)
+        if (!PADS) return;
+        PAD = PADS.poll();
+        if (shell.busy) { PAD = NativeInput.empty(); return; }
+        if (PAD.modePressed) setMode(prefs.mode === 'enhanced' ? 'original' : 'enhanced');
+        if (PAD.pausePressed) togglePause();
+    }
+    // zatizeni v liste (jako Superfrog): prace stranky v snimcich displeje (kroky hry, kresleni) na jeden krok hry, jednou za sekundu
+    const load = { ms: 0, steps: 0, t: 0 };
     function draw(now) {
+        const t = performance.now(); drawFrame(now); load.ms += performance.now() - t;
+        if (!running || paused || wbTest) { load.t = 0; return; }
+        if (!load.t) { load.t = t; load.ms = 0; load.steps = steps; return; }
+        if (t - load.t >= 1000 && steps > load.steps) {
+            const per = load.ms / (steps - load.steps), txt = PRES ? 'Level 1 · frame ' + per.toFixed(1) + ' ms of 20' : 'Hra běží · výpočet ' + per.toFixed(1).replace('.', ',') + ' ms z 20';
+            $('status').textContent = txt; stats.loadMs = per; load.t = t; load.ms = 0; load.steps = steps;
+        }
+    }
+    function drawFrame(now) {
         if (!running) return;
+        pollPad();
         if (wbTest) { requestAnimationFrame(draw); return; }   // testovaci vzor obrazoveho kontraktu (wbObrazTest.fill) se neprekresluje
+        const t0 = performance.now();
         if (!paused) {
             if (now - stepClock > 5 * FRAME_MS) stepClock = now - FRAME_MS;      // po vypadku (menu, karta na pozadi) znovu zavesit
-            while (now - stepClock >= FRAME_MS) { step(); stepClock += FRAME_MS; }
+            // takt jako Superfrog (docs/NATIVE.md 5n): nejvys MAX_STEPS kroku hry na snimek displeje; kdyz pocitac nestiha, zpozdeni se
+            // zahodi a hra zpomali (dohaneni by snimek prodlouzilo a stranka by prestala reagovat na menu a klavesy)
+            let ns = 0;
+            while (now - stepClock >= FRAME_MS && ns < MAX_STEPS) { step(); stepClock += FRAME_MS; ns++; }
+            if (now - stepClock >= FRAME_MS) { stepClock = now; stats.slowFrames++; }
             // zkracene nahravani uvodu: po logu hra pri cerne obrazovce zpracovava zvuky z CSAM/FSAM (~340 snimku, kod 0xC2388E) -> 8 snimku
             // hry na snimek displeje; potom zahodit nahromadeny zvuk (jinak by zpozdoval)
-            if (introTurbo()) { for (let i = 0; i < 7 && introTurbo(); i++) step(); turbo = true; }
+            if (introTurbo()) { for (let i = 0; i < 7 && introTurbo() && performance.now() - t0 < TURBO_MS; i++) step(); turbo = true; }
             // cerne prodlevy nejvys asi 1 s (prani hrace 2026-10-23): je-li obraz cely cerny dele nez 25 snimku (vypocet hry, napr. rozbaleni
             // terminalu Intex ~245 snimku, nebo cekani na disketu), bezi hra 16 snimku na snimek displeje, dokud se obraz neobjevi
-            else if (blackRun > BLACK_HOLD) { for (let i = 0; i < 15 && blackRun > BLACK_HOLD; i++) step(); turbo = true; }
+            else if (blackRun > BLACK_HOLD) { for (let i = 0; i < 15 && blackRun > BLACK_HOLD && performance.now() - t0 < TURBO_MS; i++) step(); turbo = true; }   // zrychleni jen do TURBO_MS prace na snimek displeje
             else if (turbo) { turbo = false; AUDIO.pause(); }
             if (presDemo >= 0 && cur && !cur.screen && !blackRun && lastNow && (presDemo += Math.max(0, Math.min(now - lastNow, 100))) >= PRES_DEMO_MS) setMode('enhanced');
             acc = now - stepClock;                                              // faze uvnitr snimku 0..20 ms od nominalniho casu kroku
         }
         lastNow = now;
         const anim = modeSample(now);
-        let vp = viewport(), sz = screenSize(), S = scaleInfo.S;   // backing muze byt o krok q sirsi nez obsah (1.3)
+        // bez zmeny se neprekresluje: pauza a menu, Original bez plynuleho posunu mezi kroky; zmena nastaveni (applyDisplay) prekresli jednou
+        if (!anim && !drawDirty && cur && cur === drawnCur && (paused || !(prefs.mode === 'enhanced' || prefs.smooth))) { requestAnimationFrame(draw); return; }
+        drawDirty = false; drawnCur = cur;
+        let vp = viewport(), sz = screenSize(), S = scaleInfo.S, par = scaleInfo.par || 1;   // backing muze byt o krok q sirsi nez obsah (1.3)
         if (anim) {   // prechod: vyrez a zoom animovane, backing = vetsi S obou rezimu, platno o celych pixelech nad animovanym vyrezem
             vp = { x0: anim.x0, y0: anim.y0, w: anim.w, h: anim.h, hud: true }; sz = screenSizeOf(vp); S = modeAnim.S;
-            const cw = Math.ceil(sz.w * S), ch = Math.ceil(sz.h * S);
+            const fp = modeAnim.fromLook.par || 1; par = fp + ((prefs.par ? PAL_PAR : 1) - fp) * anim.e;   // pomer pixelu se prolina
+            const cw = Math.ceil(sz.w * S * par), ch = Math.ceil(sz.h * S);
             if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
-            gameEl.style.width = (sz.w * anim.z + 2) + 'px'; canvas.style.height = (sz.h * anim.z + 2) + 'px';
+            gameEl.style.width = (cw / S * anim.z + 2) + 'px'; canvas.style.height = (sz.h * anim.z + 2) + 'px';
             // vzhled (4): rozmazani a knofliky se prolinaji, perioda CRT nikdy - do e < 0,5 vzor stareho rezimu (mel-li CRT), pak noveho;
             // --crt-on pri obou zapnutych klesne k 40 % a zase stoupne, jinak linearne
             const f = modeAnim.fromLook, g = lookOf(prefs.mode), e = anim.e, l = (k) => f[k] + (g[k] - f[k]) * e, old = e < .5 && f.on > 0;
-            applyLook({ mode: old ? f.mode : g.mode, detail: old ? f.detail : g.detail, shape: old ? f.shape : g.shape, on: WBOBRAZ.crtOn(e, f.on, g.on), blur: l('blur'), brightness: l('brightness'), contrast: l('contrast'), saturation: l('saturation') },
+            applyLook({ mode: old ? f.mode : g.mode, detail: old ? f.detail : g.detail, shape: old ? f.shape : g.shape, on: WBOBRAZ.crtOn(e, f.on, g.on), blur: l('blur'), brightness: l('brightness'), contrast: l('contrast'), saturation: l('saturation'), red: l('red'), green: l('green'), blue: l('blue'), par },
                 sz.w, sz.h, anim.z, scaleInfo.dpr);
         }
         screen.align();   // poloha obsahu na celem pixelu zarizeni (1.4): i po zmene sirky behem prechodu nebo posuvniku stage
         const hudL = hudOf(vp), top = hudL.top;
         ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.save(); if (par !== 1) ctx.setTransform(par, 0, 0, 1, 0, 0);   // pomer pixelu PAL: vse nize vodorovne natazene (souradnice dal v S)
         if (cur && cur.screen) {   // obrazovka mimo level: pozice 142 a radek 52 jako okno hry, nahore a dole to, co obrazovka ma (HUD se nekresli)
             ctx.imageSmoothingEnabled = false;
             ctx.drawImage(cur.screen, (SCR.h0 - 142 - vp.x0) * S, (top + SCR.l0 - 52 - vp.y0) * S, SCR.w * S, SCR.h * S);   // radek 52 = radek 0 okna hry pod HUD
@@ -540,6 +623,7 @@
             ctx.restore();
             if ((stats.frames & 15) === 0) $('frame-status').textContent = 'Krok ' + steps + ', hráč (' + cur.px + ', ' + cur.py + '), kamera (' + cur.camX + ', ' + cur.camY + '), krok ' + stats.stepMs.toFixed(2) + ' ms, obraz ' + stats.renderMs.toFixed(2) + ' ms, blitů ' + core._core_blits() + '; plynulost: ' + meter.dup + ' dvojitých z ' + meter.moving + ' pohybových snímků, sprite chyběl ' + meter.spriteMissing + '×, backing ' + scaleInfo.S + '× při dpr ' + scaleInfo.dpr + '.';
         }
+        ctx.restore();   // transformace PAL jen pro snimek hry (testovaci vzor kontraktu kresli bez ni)
         requestAnimationFrame(draw);
     }
     function start() { if (!core || !seedMeta) return; $('intro').hidden = true; gameEl.hidden = false; running = true; paused = false; manualPause = false; lastNow = performance.now(); stepClock = lastNow; acc = 0; applyDisplay(); capture(); canvas.focus(); requestAnimationFrame(draw); }
@@ -611,7 +695,7 @@
         const fromLook = lastLook ? { ...lastLook } : lookOf(fromMode), fromVp = modeAnim ? captureViewport() : viewport();
         prefs.mode = m; savePrefs();   // held se nemaze: drzena sipka by po stisku E uz neprisla znovu (opakovani patri E) a hrac by stal
         const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const toVp = viewport(), zt = zoomFor(toVp, prefs.zoom), zf = zoomFor(fromVp, prefs.views[fromMode].zoom);
+        const toVp = viewport(), zt = zoomFor(toVp, prefs.zoom, prefs.par ? PAL_PAR : 1), zf = zoomFor(fromVp, prefs.views[fromMode].zoom, prefs.views[fromMode].par ? PAL_PAR : 1);
         if (running && !reduce) {
             modeAnim = { from, to: { x0: toVp.x0, y0: toVp.y0, w: toVp.w, h: toVp.h, z: zt.z }, fromVp: VIEWPORTS.w448, toVp, start: now, S: Math.max(zt.S, zf.S, scaleInfo.S), fromMode, fromLook };
             gameEl.classList.add('mode-changing');   // bez CSS prechodu: --crt-on ridi animace (4)
@@ -630,11 +714,13 @@
     canvas.addEventListener('mousedown', (e) => { if (e.button === 0) mouseDown = true; });
     window.addEventListener('mouseup', (e) => { if (e.button === 0) mouseDown = false; });
     $('mode-original').addEventListener('click', () => setMode('original')); $('mode-enhanced').addEventListener('click', () => setMode('enhanced'));
-    for (const k of KNOBS) $(k).addEventListener('input', () => { prefs[k] = parseInt($(k).value, 10); savePrefs(); applyDisplay(); });
-    $('monitor-reset').addEventListener('click', () => { prefs.brightness = prefs.contrast = prefs.saturation = 100; savePrefs(); applyDisplay(); shell.message('Jas, kontrast a sytost 100 %'); });
+    for (const k of KNOBS.concat(CHANNELS)) $(k).addEventListener('input', () => { prefs[k] = parseInt($(k).value, 10); savePrefs(); applyDisplay(); });
+    // vychozi obraz zvoleneho rezimu: vsechno nastaveni obrazu toho rezimu (zoom, CRT, rozmazani, plynuly posun, ovladace monitoru, kanaly)
+    $('look-reset').addEventListener('click', () => { Object.assign(prefs.views[prefs.mode], VIEW_DEFAULTS[prefs.mode]); savePrefs(); applyDisplay(); shell.message(PRES ? 'Default picture for ' + (prefs.mode === 'enhanced' ? 'Enhanced' : 'Original') : 'Výchozí obraz režimu ' + (prefs.mode === 'enhanced' ? 'Vylepšeno' : 'Originál')); });
     $('smooth').addEventListener('change', () => { prefs.smooth = $('smooth').checked; savePrefs(); });
     $('zoom').addEventListener('input', () => { prefs.zoom = parseFloat($('zoom').value); savePrefs(); applyDisplay(); });
     for (const b of document.querySelectorAll('[data-zoom]')) b.addEventListener('click', () => { prefs.zoom = parseFloat(b.dataset.zoom); savePrefs(); applyDisplay(); });
+    $('par').addEventListener('change', () => { prefs.par = $('par').checked; savePrefs(); applyDisplay(); });
     $('crt').addEventListener('change', () => { prefs.crt = $('crt').checked; savePrefs(); applyDisplay(); });
     $('crt-detail').addEventListener('change', () => { prefs.crtDetail = $('crt-detail').value; savePrefs(); applyDisplay(); });
     $('crt-shape').addEventListener('change', () => { prefs.crtShape = $('crt-shape').value; savePrefs(); applyDisplay(); });
@@ -644,7 +730,23 @@
     $('volume').addEventListener('input', () => { sound.volume = parseInt($('volume').value, 10) / 100; saveSound(); AUDIO.setVolume(sound.volume); });
     document.addEventListener('pointerdown', unlockAudio);
     document.addEventListener('visibilitychange', () => { if (document.hidden) AUDIO.pause(); });
-    $('pause-game').addEventListener('click', () => { manualPause = !manualPause; paused = manualPause; if (paused) AUDIO.pause(); if (!paused) stepClock = performance.now(); shell.message(paused ? 'Pauza' : 'Pokračuje'); });
+    function togglePause() { manualPause = !manualPause; paused = manualPause; if (paused) AUDIO.pause(); if (!paused) stepClock = performance.now(); shell.message(paused ? 'Pauza' : 'Pokračuje'); }
+    if ($('pause-game')) $('pause-game').addEventListener('click', togglePause);
+    // ovladac: hlaseni pri pripojeni a odpojeni, volba ovladace a tlacitka Fire v menu Hra (jen stranka s menu; ulozeno v ab-native-pad)
+    function padUi() {
+        const sel = $('pad-select'), fire = $('pad-fire'); if (!(sel instanceof HTMLSelectElement) || !(fire instanceof HTMLSelectElement) || !PADS) return;   // stranka bez menu ovladace (prezentace)
+        const pads = Array.from((navigator.getGamepads && navigator.getGamepads()) || []).filter((p) => p && p.connected !== false);
+        sel.replaceChildren(new Option('Automaticky (první připojený)', 'auto'), ...pads.map((p) => new Option((p.index + 1) + ': ' + p.id.slice(0, 48) + (p.mapping === 'standard' ? '' : ' (bez standardního rozložení)'), String(p.index))));
+        sel.value = [...sel.options].some((o) => o.value === PADS.preferred) ? PADS.preferred : 'auto';
+        const pad = pads.find((p) => String(p.index) === sel.value) || pads[0], n = pad ? pad.buttons.length : 0;
+        fire.replaceChildren(new Option('Automaticky', 'auto'), ...Array.from({ length: n }, (_, i) => new Option('Tlačítko ' + (i + 1), String(i))));
+        fire.value = [...fire.options].some((o) => o.value === PADS.fireButton) ? PADS.fireButton : 'auto'; fire.disabled = !pad;
+        $('pad-status').textContent = pads.length ? 'Připojeno: ' + pads.length : 'Žádný ovladač (stiskni na něm tlačítko)';
+    }
+    const savePad = () => { try { localStorage.setItem(PAD_KEY, JSON.stringify({ pad: PADS.preferred, fire: PADS.fireButton })); } catch (e) { /* bez ulozeni */ } };
+    if ($('pad-select') instanceof HTMLSelectElement) { $('pad-select').addEventListener('change', (e) => { PADS.preferred = e.target.value; savePad(); padUi(); }); $('pad-fire').addEventListener('change', (e) => { PADS.fireButton = e.target.value; savePad(); }); padUi(); }
+    window.addEventListener('gamepadconnected', (e) => { shell.message((PRES ? 'Controller connected: ' : 'Ovladač připojen: ') + e.gamepad.id.slice(0, 40)); padUi(); });
+    window.addEventListener('gamepaddisconnected', (e) => { shell.message((PRES ? 'Controller disconnected: ' : 'Ovladač odpojen: ') + e.gamepad.id.slice(0, 40)); padUi(); });
     $('reset').addEventListener('click', () => { restart(); });
     for (const k of [1, 2, 3]) { $('save-' + k).addEventListener('click', () => saveSlot(k)); $('load-' + k).addEventListener('click', () => loadSlot(k)); }
     $('load-0').addEventListener('click', () => loadSlot(0));
@@ -665,7 +767,7 @@
         if (e.code === 'KeyE') { if (!e.repeat) setMode(prefs.mode === 'enhanced' ? 'original' : 'enhanced'); }
         else if (PRES && e.code === 'KeyH') PRES.help();
         else if (e.code === (PRES ? 'KeyM' : 'KeyS')) { $('sound').checked = !$('sound').checked; $('sound').dispatchEvent(new Event('change')); shell.message(sound.on ? 'Zvuk zapnut' : 'Zvuk vypnut'); }
-        else if (e.code === 'KeyP') $('pause-game').click();
+        else if (e.code === 'KeyP') togglePause();
         else if (e.code === 'KeyR') $('reset').click();
         else if (e.code === 'KeyF') $('fullscreen').click();
         else if (!PRES && /^Digit[1-3]$/.test(e.code) && !e.repeat) { const k = +e.code.slice(5); if (e.shiftKey) saveSlot(k); else loadSlot(k); }
@@ -680,7 +782,7 @@
         if (v0) setInterval(async () => { const v = await read(); if (v && v !== v0) { log('nová verze souborů, obnovuji stránku'); location.reload(); } }, 2000);
     })();
     window.abg = {
-        ready: () => !!(core && seedMeta), prefs, applyDisplay, start, steps: () => steps,
+        ready: () => !!(core && seedMeta), prefs, applyDisplay, start, steps: () => steps, input: () => joystick(), pad: () => PAD && { ...PAD, pad: undefined },
         fault: () => ({ at: core._core_fault() >>> 0, pc: core._core_fault_pc() >>> 0, module: core._core_module() }),
         state: () => cur && { n: cur.n, px: cur.px, py: cur.py, camX: cur.camX, camY: cur.camY, module: core._core_module(), level: !cur.screen },
         bootlog: () => core.UTF8ToString(core._core_bootlog()),
@@ -731,7 +833,7 @@
         // diagnostika obrazu (wb-shell obraz 1.2, 5.6; tools/obraztest.py): backing, obsah, S, poloha obsahu a vrstvy CRT v pixelech zarizeni, P a D
         display: () => { const info = screen.info(), dpr = window.devicePixelRatio || 1, sz = screenSize(); return { mode: prefs.mode, anim: !!modeAnim,
             e: modeAnim ? smoothstep(Math.max(0, Math.min(1, (performance.now() - modeAnim.start) / MODE_MS))) : null, size: [sz.w, sz.h], w0: W0,
-            backing: [canvas.width, canvas.height], content: [canvas.clientWidth, canvas.clientHeight], dpr, scale: { ...scaleInfo }, S: scaleInfo.S, wish: prefs.zoom, limit: scaleInfo.limit, zoom: scaleInfo.zoom,
+            backing: [canvas.width, canvas.height], content: [canvas.clientWidth, canvas.clientHeight], dpr, scale: { ...scaleInfo }, S: scaleInfo.S, par: scaleInfo.par, wish: prefs.zoom, limit: scaleInfo.limit, zoom: scaleInfo.zoom,
             ...info, crtPx: info.crtP / dpr, crtDark: info.crtD / dpr, filter: canvas.style.filter,
             views: JSON.parse(JSON.stringify(prefs.views)), stored: (() => { try { return JSON.parse(localStorage.getItem(STORE_KEY)); } catch (e) { return null; } })() }; },
         testFill: (color) => { ctx.fillStyle = color; ctx.fillRect(0, 0, canvas.width, canvas.height); },   // jen testy: plocha jedne barvy pod CRT (5.4)

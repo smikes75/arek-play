@@ -4,17 +4,19 @@ Team17, 1992, Amiga. Developed and published by Team17.
 
 ## What this is
 
-There is no CPU interpreter and no Kickstart: the game's own 68000 code was translated ahead of time to C and WebAssembly, and it runs on our own model of the Amiga chipset (Copper and bitplanes, sprites, the blitter's timing, the Paula sound channels). The translated code ships sealed. Only your disk images open it, and the images never leave your browser.
+There is no CPU interpreter and no Kickstart: the game's own 68000 code was translated ahead of time to C and WebAssembly, and it runs on our own model of the Amiga chipset (Copper and bitplanes, sprites, the blitter cycle by cycle, the chip bus slot by slot, the Paula sound channels). The translated code ships sealed. Only your disk images open it, and the images never leave your browser.
 
 ## What was measured
 
-- **8,420 frames** (2.8 minutes) of level 1 played on both the rebuild and the original in the vAmiga emulator: the game's RAM fingerprints are identical in **99.98 %** of the frames, player and camera positions in **100 %**.
-- **99.95 %** of the writes to the sound chip match the original; the four Paula channels match 97.9–100 % of their output bytes.
+- **8,420 frames** (2.8 minutes) of level 1 played on both the rebuild and the original in the vAmiga emulator: the game's RAM fingerprints are identical in **99.99 %** of the frames, player and camera positions in **100 %**.
+- **99.94 %** of the writes to the sound chip match the original; the four Paula channels match 99.98–100 % of their output bytes.
+- A route through level 1 with the Intex terminal and the lift (7,592 frames): game logic and positions **100 %**, sound writes **99.88 %**. Level 2 up to game over (2,327 frames): game logic, positions and sound writes **100 %**.
+- The rebuild models the chip bus slot by slot: 47,540 blits of level 2 end on the same cycle as in the original.
 - **24,147** game instructions translated by the kit's recompiler; the title, briefing, terminal and between-level screens are translated too.
 
 ## Who and how
 
-Claude (Anthropic, Claude Opus 5.5) in Claude Code, over four days (20–23 October 2026). Tools: the amiga-re-kit (`arek`) for disk, unpacking, disassembly and recompilation, the headless vAmiga emulator as the measured reference, Emscripten for WebAssembly.
+Claude (Anthropic, Claude Opus 5.5) in Claude Code, over six days (20–25 October 2026). Tools: the amiga-re-kit (`arek`) for disk, unpacking, disassembly and recompilation, the headless vAmiga emulator as the measured reference, Emscripten for WebAssembly.
 
 ## Enhanced mode
 

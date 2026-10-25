@@ -34,13 +34,28 @@ const RENDER = (() => {
         }
     }
     const clampG = (v) => gammaLut[v < 0 ? 0 : v > (255 << 16) ? 255 : v >> 16];
-    const RGB12 = new Uint32Array(4096);   // 0xAABBGGRR (ImageData little endian)
+    const RGB12 = new Uint32Array(4096), RGB12_BASE = new Uint32Array(4096);   // 0xAABBGGRR (ImageData little endian)
     for (let c = 0; c < 4096; c++) {
         const r8 = (c >> 8 & 15) << 4, g8 = (c >> 4 & 15) << 4, b8 = (c & 15) << 4;
         const r = clampG(adj[r8] + adj[256 + g8] + adj[512 + b8]);
         const g = clampG(adj[768 + r8] + adj[1024 + g8] + adj[1280 + b8]);
         const b = clampG(adj[1536 + r8] + adj[1792 + g8] + adj[2048 + b8]);
-        RGB12[c] = (0xff << 24 | b << 16 | g << 8 | r) >>> 0;
+        RGB12[c] = RGB12_BASE[c] = (0xff << 24 | b << 16 | g << 8 | r) >>> 0;
+    }
+    // kanaly R G B 50-150 % (jako trimry RGB monitoru, menu Obraz): prepise RGB12 na miste, vsechny barvy obrazu jdou pres ni;
+    // za snimek nic nestoji (zadny filtr). 100 % = presne zakladni tabulka. Vraci true, kdyz se tabulka zmenila.
+    let channelsKey = '100/100/100';
+    function setChannels(red, green, blue) {
+        const k = [red, green, blue].map((v) => Math.round(v)), key = k.join('/');
+        if (key === channelsKey) return false;
+        channelsKey = key;
+        if (key === '100/100/100') { RGB12.set(RGB12_BASE); return true; }
+        const ch = (v, f) => Math.min(255, Math.round(v * f / 100));
+        for (let c = 0; c < 4096; c++) {
+            const v = RGB12_BASE[c];
+            RGB12[c] = (0xff << 24 | ch(v >>> 16 & 255, k[2]) << 16 | ch(v >>> 8 & 255, k[1]) << 8 | ch(v & 255, k[0])) >>> 0;
+        }
+        return true;
     }
 
     // --- copper list ---------------------------------------------------------------
@@ -90,11 +105,15 @@ const RENDER = (() => {
     // Indexy barev 0..31 pro vyrez {x0, y0, w, h} v souradnicich hraci plochy (pixel 0,0 = levy
     // horni roh okna na radku 52). Zaporne x0/y0 a presah = okraje bufferu (336 x 287) mimo okno;
     // co neni v bufferu, zustane 0. planes = Uint8Array chip RAM od adresy planesBase.
+    // SPREAD[2b], SPREAD[2b + 1]: bity bajtu b (nejvyssi = levy bod) jako 8 bajtu po 0/1 (little endian: bajt i = bod i) -> radek bodu najednou
+    const SPREAD = (() => { const t = new Uint32Array(512); for (let b = 0; b < 256; b++) for (let i = 0; i < 8; i++) if (b & (0x80 >> i)) t[2 * b + (i >> 2)] |= 1 << (8 * (i & 3)); return t; })();
+    const ROW8 = new Uint8Array(BUF_W), ROW32 = new Uint32Array(ROW8.buffer);
     function renderIndices(cop, planes, planesBase, view, out) {
         const { x0, y0, w, h } = view;
         out = out || new Uint8Array(w * h); out.fill(0);
         if (!cop.level) return out;
         const fine = fineOf(cop), camRow = camRowOf(cop), s0 = cop.sets[0], s1 = cop.sets[1];
+        const st = fine + x0, xs = Math.max(0, -st), xe = Math.min(w, BUF_W - st);   // body radku bufferu mimo 0..BUF_W zustanou 0
         for (let y = 0; y < h; y++) {
             const py = y0 + y;                     // radek hraci plochy (0 = radek 52)
             let ptrs, k;
@@ -105,16 +124,13 @@ const RENDER = (() => {
                 ptrs = s1.ptrs; k = row;
             } else if (k < 0) continue;
             const orow = y * w;
+            ROW32.fill(0);
             for (let p = 0; p < 5; p++) {
                 const pb = ptrs[p] + k * ROWB - planesBase;
                 if (pb < 0 || pb + ROWB > planes.length) continue;
-                const bit = 1 << p;
-                for (let x = 0; x < w; x++) {
-                    const b = fine + x0 + x;
-                    if (b < 0 || b >= BUF_W) continue;
-                    if (planes[pb + (b >> 3)] & (0x80 >> (b & 7))) out[orow + x] |= bit;
-                }
+                for (let i = 0; i < ROWB; i++) { const v = planes[pb + i]; if (v) { ROW32[2 * i] |= SPREAD[2 * v] << p; ROW32[2 * i + 1] |= SPREAD[2 * v + 1] << p; } }
             }
+            for (let x = xs; x < xe; x++) out[orow + x] = ROW8[st + x];
         }
         return out;
     }
@@ -167,12 +183,16 @@ const RENDER = (() => {
     // --- teren z tabulky mapy a dlazdic v RAM hry (docs/MAP.md): mapa 124 x 109 slov na 0xC47288 (index dlazdice = slovo >> 6),
     // dlazdice 160 B (5 planu po 16 slovech) na 0xC4DC20; hra dlazdice animuje na miste, atlas se obnovuje jen pro zmenene ---
     const MAP_W = 124, MAP_H = 109, MAP_ADDR = 0xc47288, TILES_ADDR = 0xc4dc20, TILE_N = 480;
+    const TILE_ADDR_OFF = (slowBase) => TILES_ADDR - slowBase;
     function tileAtlas(state, slow, slowBase) {
-        if (!state.atlas) { state.atlas = new Uint8Array(TILE_N * 256); state.cache = new Uint8Array(TILE_N * 160); state.cache.fill(0xff); }
-        const base = TILES_ADDR - slowBase; let changed = 0;
+        if (!state.atlas) { state.atlas = new Uint8Array(TILE_N * 256); state.cache = new Uint8Array(TILE_N * 160); state.cache.fill(0xff); state.cache32 = new Uint32Array(state.cache.buffer); }
+        const base = TILE_ADDR_OFF(slowBase); let changed = 0;
+        const al = ((slow.byteOffset + base) & 3) === 0 && slow.byteOffset + base + TILE_N * 160 <= slow.buffer.byteLength;
+        const s32 = al ? new Uint32Array(slow.buffer, slow.byteOffset + base, TILE_N * 40) : null, c32 = state.cache32;
         for (let t = 0; t < TILE_N; t++) {
             const o = base + t * 160; let same = true;
-            for (let i = 0; i < 160; i++) if (slow[o + i] !== state.cache[t * 160 + i]) { same = false; break; }
+            if (s32) { for (let i = t * 40, e = i + 40; i < e; i++) if (s32[i] !== c32[i]) { same = false; break; } }
+            else for (let i = 0; i < 160; i++) if (slow[o + i] !== state.cache[t * 160 + i]) { same = false; break; }
             if (same) continue;
             state.cache.set(slow.subarray(o, o + 160), t * 160); changed++;
             const px = state.atlas; const pb = t * 256;
@@ -186,19 +206,23 @@ const RENDER = (() => {
         return changed;
     }
     /** Indexy barev sveta (x0, y0, w, h) z mapy v RAM (slow = Uint8Array slow RAM, slowBase jeji adresa) do out (w*h). */
-    function renderWorld(state, slow, slowBase, x0, y0, w, h, out) {
-        tileAtlas(state, slow, slowBase);
+    function renderWorld(state, slow, slowBase, x0, y0, w, h, out, atlasDone) {   // atlasDone: atlas uz v tomto snimku obnoveny (druhe volani)
+        if (!atlasDone) tileAtlas(state, slow, slowBase);
         const atlas = state.atlas, mb = MAP_ADDR - slowBase;
         for (let y = 0; y < h; y++) {
             const wy = y0 + y, cr = wy >> 4, ry = (wy & 15) * 16, ob = y * w;
             if (cr < 0 || cr >= MAP_H) { out.fill(0, ob, ob + w); continue; }
             const rb = mb + cr * MAP_W * 2;
-            for (let x = 0; x < w; x++) {
-                const wx = x0 + x, cc = wx >> 4;
-                if (cc < 0 || cc >= MAP_W) { out[ob + x] = 0; continue; }
-                const word = (slow[rb + cc * 2] << 8) | slow[rb + cc * 2 + 1]; let t = word >> 6;
-                if (!t && (word & 63) && state.diskMap) t = state.diskMap[cr * MAP_W + cc] >> 6;   // podklad objektu (dlazdice 0 + typ): puvodni dlazdice z diskety
-                out[ob + x] = t < TILE_N ? atlas[t * 256 + ry + (wx & 15)] : 0;
+            for (let x = 0; x < w;) {                // po usecich jedne dlazdice
+                const wx = x0 + x, cc = wx >> 4, sub = wx & 15, n = Math.min(16 - sub, w - x), o = ob + x;
+                let t = TILE_N;
+                if (cc >= 0 && cc < MAP_W) {
+                    const word = (slow[rb + cc * 2] << 8) | slow[rb + cc * 2 + 1]; t = word >> 6;
+                    if (!t && (word & 63) && state.diskMap) t = state.diskMap[cr * MAP_W + cc] >> 6;   // podklad objektu (dlazdice 0 + typ): puvodni dlazdice z diskety
+                }
+                if (t < TILE_N) { const a = t * 256 + ry + sub; for (let i = 0; i < n; i++) out[o + i] = atlas[a + i]; }
+                else for (let i = 0; i < n; i++) out[o + i] = 0;
+                x += n;
             }
         }
     }
@@ -421,14 +445,24 @@ const RENDER = (() => {
     // Prvni bit nactenych dat je na vodorovne pozici 2*DDFSTRT + 17 (lores; 0x38 -> 0x81) posunuty o BPLCON1. Mimo okno barva 0.
     // Vystup RGBA pro radky l0..l0+h a lores pozice h0..h0+w; xs = 1: krok 1 lores px (hires: dva body sloucene OR jako dosud),
     // xs = 2: krok 1 hires px (sirka 2w; obrazovky v hires, napr. upoutavka uvodu BPLCON0 0xC200). Uvnitr vzdy v hires bodech.
+    const LORES_SLOT = [7, 3, 5, 1, 6, 2];   // takt nacteni planu 1-6 ve skupine 8 taktu lores od DDFSTRT (vAmiga SequencerBpl)
     function renderCopperFrame(chip, chipBase, coplc, init, l0, h, h0, w, out, xs, st) {
         xs = xs === 2 ? 2 : 1; const OW = w * xs;
         // st (volitelne): { vOpen } = svisle okno jako klopny obvod hardwaru – otevre se na radku DIWSTRT, zavre na radku DIWSTOP a stav
         // prechazi do dalsiho snimku (konec za radkem 312 = okno zustane otevrene); bez st okno jen mezi radky start..stop v tomto snimku
-        let vOpen = !!(st && st.vOpen);
+        // Se st navic sbernice jako hardware (zmereno proti vAmize, docs/RENDER.md 15, „smeti“ terminalu Intex): copper cte jen v sudych
+        // taktech, ktere nebere bitplan; zapis BPLxPT s presnym taktem a zahozeni, kdyz bitplan pouzil ukazatel o takt driv; ukazatele
+        // pokracuji z konce minuleho snimku (st.ptr); st.lines = radku snimku (stranka 313, vAmiga 312)
+        let vOpen = !!(st && st.vOpen); const NL = (st && st.lines) || 313;
         const R = new Uint16Array(256); if (init) R.set(init.subarray ? init.subarray(0, 256) : init);
-        if (st && st.diw) { R[0x08e >> 1] = st.diw[0]; R[0x090 >> 1] = st.diw[1]; }   // DIWSTRT/DIWSTOP z konce minuleho snimku (zapsal je copper)
-        const rd16 = (a) => { const o = a - chipBase; return (o >= 0 && o + 1 < chip.length) ? (chip[o] << 8) | chip[o + 1] : 0; };
+        if (st && st.diw) { R[0x08e >> 1] = st.diw[0]; R[0x090 >> 1] = st.diw[1]; }
+        if (st && st.ptr) R.set(st.ptr, 0xe0 >> 1);   // DIWSTRT/DIWSTOP z konce minuleho snimku (zapsal je copper)
+        // se st: st.pages = 4KB stranky chip RAM, ktere snimek precetl (copper list, bitplany, sprity) -> stranka muze dalsi snimek
+        // se stejnym obsahem techto stranek, registry a stavem preskocit (vystup by byl stejny)
+        const pages = st ? (st.pages && st.pages.length === (chip.length + 4095) >> 12 ? st.pages : (st.pages = new Uint8Array((chip.length + 4095) >> 12))) : null;
+        if (pages) pages.fill(0);
+        const rd16 = pages ? (a) => { const o = a - chipBase; if (o >= 0 && o + 1 < chip.length) { pages[o >> 12] = 1; pages[(o + 1) >> 12] = 1; return (chip[o] << 8) | chip[o + 1]; } return 0; }
+            : (a) => { const o = a - chipBase; return (o >= 0 && o + 1 < chip.length) ? (chip[o] << 8) | chip[o + 1] : 0; };
         const ptr = (i) => ((R[(0xe0 >> 1) + 2 * i] << 16) | R[(0xe2 >> 1) + 2 * i]) >>> 0;
         const setPtr = (i, v) => { R[(0xe0 >> 1) + 2 * i] = v >>> 16; R[(0xe2 >> 1) + 2 * i] = v & 0xffff; };
         out = out || new Uint8ClampedArray(OW * h * 4); const u32 = new Uint32Array(out.buffer, out.byteOffset, OW * h);
@@ -439,18 +473,28 @@ const RENDER = (() => {
         const sprLoad = (n) => { const S = spr[n]; const pos = rd16(S.ptr), ctl = rd16(S.ptr + 2); S.vs = (pos >> 8) | ((ctl & 4) << 6); S.ve = (ctl >> 8) | ((ctl & 2) << 7); S.hs = ((pos & 0xff) << 1) | (ctl & 1); S.att = (ctl >> 7) & 1; S.ptr += 4; if (!pos && !ctl) S.vs = S.ve = -1; };
         // copper s vodorovnou polohou (jako hardware): instrukce = 4 takty, WAIT plati pro paprsek >= (VP, HP) v maskach (8 bitu radku:
         // po radku 255 je nizsich 8 bitu 0, proto se ceka FFDF/FFD7 a pak radky - 256); zapis po HFETCH v radku plati od dalsiho radku
-        const ev = []; let cl = 0, ch = 0;
+        const ev = [], pw = []; let cl = 0, ch = 0;
         const step = (n) => { ch += n; while (ch >= 227) { ch -= 227; cl++; } };
-        for (let guard = 0; guard < 8192 && cl < 313; guard++) {
-            const w1 = rd16(cp), w2 = rd16(cp + 2); cp += 4; step(4);
-            if (!(w1 & 1)) { ev.push([ch <= HFETCH ? cl : cl + 1, (w1 & 0x1fe) >> 1, w2]); if (((w1 & 0x1fe) >> 1) === (0x080 >> 1) || ((w1 & 0x1fe) >> 1) === (0x082 >> 1)) R[(w1 & 0x1fe) >> 1] = w2; if (((w1 & 0x1fe) >> 1) === (0x088 >> 1)) cp = ((R[0x080 >> 1] << 16) | R[0x082 >> 1]) >>> 0; continue; }
+        // se st: sloty bitplanu v radku copperu (lores, 5-6 planu: plan 5 na offsetu 6 skupiny od DDFSTRT, plan 6 na 2), okno podle DIW,
+        // ktere copper zapsal (CR); takt zapisu MOVE = druhe slovo (sedi na takt se vsemi zapisy v reglogu vAmigy)
+        const CR = R.slice(); let cvOpen = vOpen, cvl = -1;
+        const cline = () => { for (let l = cvl + 1; l <= cl; l++) { const s = CR[0x08e >> 1] >> 8, e = (CR[0x090 >> 1] >> 8) | ((CR[0x090 >> 1] & 0x8000) ? 0 : 0x100); if (l === e) cvOpen = false; if (l === s) cvOpen = true; } cvl = cl; };
+        const busy = () => {
+            cline(); const c0 = CR[0x100 >> 1], np = (c0 >> 12) & 7; if (!cvOpen || np < 5 || (c0 & 0x8000)) return false;
+            const s = CR[0x092 >> 1] & 0xfc, n = (((CR[0x094 >> 1] & 0xfc) - s) >> 3) + 1, o = ch - s; return o >= 0 && o < 8 * n && (o % 8 === 6 || (np >= 6 && o % 8 === 2));
+        };
+        const fetch = () => { step(2); if (!st) return; if (ch & 1) step(1); while (busy()) step(2); };
+        for (let guard = 0; guard < 8192 && cl < NL; guard++) {
+            const w1 = rd16(cp), w2 = rd16(cp + 2); cp += 4; fetch(); fetch();
+            if (!(w1 & 1)) { const rg = (w1 & 0x1fe) >> 1; CR[rg] = w2;
+                if (st && rg >= (0xe0 >> 1) && rg < (0xf8 >> 1)) pw.push([cl, ch, rg, w2]); else ev.push([ch <= HFETCH ? cl : cl + 1, rg, w2]); if (((w1 & 0x1fe) >> 1) === (0x080 >> 1) || ((w1 & 0x1fe) >> 1) === (0x082 >> 1)) R[(w1 & 0x1fe) >> 1] = w2; if (((w1 & 0x1fe) >> 1) === (0x088 >> 1)) cp = ((R[0x080 >> 1] << 16) | R[0x082 >> 1]) >>> 0; continue; }
             if (w1 === 0xffff && w2 === 0xfffe) break;
             if (w2 & 1) continue;                                       // SKIP: bez preskoceni (aproximace)
             const vp = (w1 >> 8), hp = w1 & 0xfe, ve = 0x80 | ((w2 >> 8) & 0x7f), he = w2 & 0xfe;
             const ok = (l, h) => { const a = l & 0xff & ve, b = vp & ve; return a > b || (a === b && (h & he) >= (hp & he)); };
             if (ok(cl, ch)) continue;
             if ((cl & 0xff & ve) === (vp & ve) && (hp & he) > (ch & he)) { ch = hp; step(2); continue; }   // pozdeji v tomto radku
-            let l = cl + 1; while (l < 313 && !ok(l, 0xe2)) l++;
+            let l = cl + 1; while (l < NL && !ok(l, 0xe2)) l++;
             cl = l; ch = ok(l, 0) ? 0 : hp; step(2);
         }
         // bez stavu z minuleho snimku: DIW jako by ho copper zapsal uz minule (prvni zapis v tomto snimku), ne nula z vychozich registru
@@ -464,8 +508,10 @@ const RENDER = (() => {
                 S.manual = true; S.reload = false; S.vs = (pos >> 8) | ((ctl & 4) << 6); S.ve = (ctl >> 8) | ((ctl & 2) << 7); S.hs = ((pos & 0xff) << 1) | (ctl & 1); S.att = (ctl >> 7) & 1;
             }
         };
-        for (let v = 0; v < 313; v++) {
+        let pi = 0;
+        for (let v = 0; v < NL; v++) {
             while (ei < ev.length && ev[ei][0] <= v) { apply(ev[ei][1], ev[ei][2]); ei++; }
+            const pwl = []; while (pi < pw.length && pw[pi][0] <= v) pwl.push(pw[pi++]);
             // radek obrazu
             const con0 = R[0x100 >> 1], hires = !!(con0 & 0x8000), np = (con0 >> 12) & 7, dpf = !!(con0 & 0x0400), ehb = np === 6 && !(con0 & 0x0800) && !dpf;
             const pf2pri = !!(R[0x104 >> 1] & 0x40);   // dual playfield: liche bitplany = PF1 (barvy 0-7), sude = PF2 (barvy 8-15), BPLCON2 bit 6 = PF2 vpredu
@@ -476,20 +522,29 @@ const RENDER = (() => {
             const words = hires ? ((ddfE - ddfS) >> 2) + 2 : ((ddfE - ddfS) >> 3) + 1;
             const pal = (i) => RGB12[(i < 32 ? R[(0x180 >> 1) + i] : (R[(0x180 >> 1) + (i - 32)] >> 1) & 0x777) & 0xfff];
             const y = v - l0;
+            // zapisy BPLxPT (jen se st): plati v taktu + 2; v radku s nacitanim lores se zahodi, kdyz plan pouzil ukazatel o takt driv
+            // (vAmiga Agnus::dropWrite), jinak zmeni ukazatel uprostred radku (dalsi slova z nove adresy)
+            const fl = inV && np > 0 && words > 0 && !hires;
+            const pwa = pwl.map(([, hh, rg, val]) => { const p = (rg - (0xe0 >> 1)) >> 1, hw = hh + 2, s = hw - 1 - ddfS; return { p, hw, rg, val, drop: fl && p < np && s >= 0 && s < 8 * words && s % 8 === LORES_SLOT[p] }; });
+            if (!fl) for (const w of pwa) R[w.rg] = w.val;
             if (inV && np > 0 && words > 0) {
                 line.fill(0);
                 const con1 = R[0x102 >> 1], first = 2 * ddfS + 17;
                 for (let p = 0; p < np; p++) {
-                    const a = ptr(p), sc = (p & 1) ? (con1 >> 4) & 15 : con1 & 15;
+                    const sc = (p & 1) ? (con1 >> 4) & 15 : con1 & 15, mine = fl ? pwa.filter((w) => w.p === p && !w.drop) : [];
+                    let a = ptr(p), k0 = 0, wi = 0;
                     for (let k = 0; k < words; k++) {
-                        const wv = rd16(a + 2 * k);
+                        while (wi < mine.length && mine[wi].hw <= ddfS + 8 * k + LORES_SLOT[p]) { setPtr(p, (a + 2 * (k - k0)) >>> 0); R[mine[wi].rg] = mine[wi].val; wi++; a = ptr(p); k0 = k; }
+                        const wv = rd16(a + 2 * (k - k0));
                         for (let b = 0; b < 16; b++) if (wv & (0x8000 >> b)) {
                             if (hires) { const hx = 2 * first - 17 + k * 16 + b + sc; if (hx >= 0 && hx < 2048) line[hx] |= 1 << p; }   // hires: prvni bod o 17 hires px driv nez lores (zmereno: upoutavka uvodu DDFSTRT 0x38 proti snimku vAmigy, 100 % bodu)
                             else { const hx = 2 * (first + k * 16 + b + sc); if (hx >= 0 && hx < 2047) { line[hx] |= 1 << p; line[hx + 1] |= 1 << p; } }
                         }
                     }
-                    setPtr(p, (a + words * 2 + (((p & 1) ? R[0x10a >> 1] : R[0x108 >> 1]) << 16 >> 16)) >>> 0);
+                    setPtr(p, (a + (words - k0) * 2 + (((p & 1) ? R[0x10a >> 1] : R[0x108 >> 1]) << 16 >> 16)) >>> 0);
+                    for (; wi < mine.length; wi++) R[mine[wi].rg] = mine[wi].val;
                 }
+                if (fl) for (const w of pwa) if (w.p >= np) R[w.rg] = w.val;
             } else line.fill(0);
             sline.fill(0);
             // sprity tohoto radku (DMA zapnute: DMACON bit 5 se nekontroluje, pointery nastavuje copper)
@@ -520,9 +575,9 @@ const RENDER = (() => {
                 u32[y * OW + x] = (inV && lx >= hs && lx < he2) ? pal(sline[q] || pfColor(b)) : pal(0);
             }
         }
-        if (st) { st.vOpen = vOpen; st.diw = [R[0x08e >> 1], R[0x090 >> 1]]; }
+        if (st) { st.vOpen = vOpen; st.diw = [R[0x08e >> 1], R[0x090 >> 1]]; st.ptr = R.slice(0xe0 >> 1, (0xe0 >> 1) + 12); }
         return out;
     }
-    return { renderCopperFrame, hudStretch, HUD_SPLITS, spawnPreviews, objectRecords, drawObjects, objectImage, objectOrigin, OBJ_LIST, parseCopper, renderIndices, drawSprites, paint, fineOf, camRowOf, renderWorld, tileAtlas, renderHud, stampWrites, marginLayer, labelOf, stampKey, stampKeyOf, PLANE_STRIDE, BUF_LEN, STAMP_SPLIT, RGB12, COP1, ROWB, PF_START, PF_H, WIN_W, BUF_ROWS, BUF_W, MAP_W, MAP_H, HUD_H };
+    return { setChannels, channels: () => channelsKey, renderCopperFrame, hudStretch, HUD_SPLITS, spawnPreviews, objectRecords, drawObjects, objectImage, objectOrigin, OBJ_LIST, parseCopper, renderIndices, drawSprites, paint, fineOf, camRowOf, renderWorld, tileAtlas, renderHud, stampWrites, marginLayer, labelOf, stampKey, stampKeyOf, PLANE_STRIDE, BUF_LEN, STAMP_SPLIT, RGB12, COP1, ROWB, PF_START, PF_H, WIN_W, BUF_ROWS, BUF_W, MAP_W, MAP_H, HUD_H };
 })();
 if (typeof module !== 'undefined') module.exports = RENDER;
