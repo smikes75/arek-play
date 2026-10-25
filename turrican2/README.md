@@ -26,6 +26,11 @@ any sub-folder (relative paths only) on a plain static server without COOP/COEP 
   into `build/present-shots/` and copied in by the build. They show game graphics, so they are kept
   out of git; `manifest.json` marks them `"screenshot": true`.
 
+The figure on the about screen (96.8 % of 293,154 frames) is `python3 tools/nativetracescore.py`
+over the ratchet `tools/nativetrace-baseline.json` of the same commit: a frame counts only if all
+compared categories of its run match, and everything after a run's first difference counts as
+different.
+
 The page fetches no game data: everything the game uses (graphics, maps, sound and music) comes
 from the visitor's ADF in the browser. No disk file is in the package; the only game pictures are
 the four screenshots in `shots/`, which the page itself does not load.

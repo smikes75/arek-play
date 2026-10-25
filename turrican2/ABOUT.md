@@ -12,8 +12,9 @@ a crack do not matter); an original retail disk is not yet verified.
 
 ## Measured against the original
 
-- 154 recorded runs of the original in the vAmiga emulator, compared frame by frame in 24
-  categories of the game state: 90 % of the 293,154 frames match in every category.
+- 154 recorded runs of the original in the vAmiga emulator, compared frame by frame in 30
+  categories of the game state: 96.8 % of the 293,154 frames match in every category up to the
+  first difference.
 - The picture of world 1-1 matches the emulator's frames in 99 % or more of the pixels.
 
 ## Made with
