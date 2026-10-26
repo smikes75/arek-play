@@ -36,6 +36,14 @@
 #keys kbd{float:none;display:inline-block;min-width:1.4em;padding:0 4px;margin:0 1px;border:1px solid var(--wb-blue);background:#fff;color:var(--wb-black);font:inherit;line-height:1.5;text-align:center}
 #stage:has(.game[hidden])+#keys{display:none}
 #help-button{min-width:24px}
+.wb-nastaveni-display,.wb-nastaveni-sound{border:0;margin:0;padding:0;min-width:0}
+.wb-nastaveni-display legend,.wb-nastaveni-sound legend{display:none}
+.wb-nastaveni-row{display:flex;align-items:center;gap:8px;padding:3px 14px}
+.wb-nastaveni-row:hover{background:#dde8f4}
+.wbpanel .wb-nastaveni-row label{padding:0;min-width:118px}
+.wbpanel .wb-nastaveni-row label:hover{background:none}
+.wb-nastaveni-row select{margin-left:auto;max-width:235px;min-width:0}
+.wb-nastaveni-value{min-width:3.4em;text-align:right;font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -51,31 +59,17 @@
 </div>
 <p class="wbnote">E switches. Original = the game's own 293 × 240 window and HUD, exact pixels. Enhanced = wider 448 × 256 playfield drawn from the level map, smooth motion between game frames.</p>
 <hr>
-<div class="wbrow">Size <output id="zoom-value">2×</output></div>
-<div class="zoom-buttons" role="group" aria-label="Size">
-<button type="button" data-zoom="0" aria-pressed="false">fit</button>
-<button type="button" data-zoom="1" aria-pressed="false">1×</button><button type="button" data-zoom="2" aria-pressed="true">2×</button><button type="button" data-zoom="3" aria-pressed="false">3×</button><button type="button" data-zoom="4" aria-pressed="false">4×</button><button type="button" data-zoom="6" aria-pressed="false">6×</button>
-</div>
-<label>Zoom <input id="zoom" type="range" min="0" max="6" step="0.1" value="2"></label>
-<p class="wbnote">Zoom = window width in multiples of the Original width (293 px), rounded to whole display pixels.</p>
-<hr>
-<label><input id="crt" type="checkbox" checked> CRT scanlines and RGB mask</label>
-<label>CRT detail <select id="crt-detail"><option value="fine">Fine</option><option value="standard">Medium</option><option value="strong" selected>Strong</option></select></label>
-<label>CRT shape <select id="crt-shape"><option value="lines" selected>Lines (scanlines)</option><option value="grid">Grid (squares)</option></select></label>
-<label>Blur <input id="blur" type="range" min="0" max="100" step="1" value="0"> <output id="blur-value">0 %</output></label>
-<hr>
-<div class="wbrow">Monitor knobs</div>
-<label>Brightness <input id="brightness" type="range" min="50" max="150" step="1" value="100"> <output id="brightness-value">100 %</output></label>
-<label>Contrast <input id="contrast" type="range" min="50" max="150" step="1" value="100"> <output id="contrast-value">100 %</output></label>
-<label>Saturation <input id="saturation" type="range" min="0" max="200" step="1" value="100"> <output id="saturation-value">100 %</output></label>
-<div class="wbrow">RGB channels (like the trimmers of an RGB monitor)</div>
-<label>Red <input id="red" type="range" min="50" max="150" step="1" value="100"> <output id="red-value">100 %</output></label>
-<label>Green <input id="green" type="range" min="50" max="150" step="1" value="100"> <output id="green-value">100 %</output></label>
-<label>Blue <input id="blue" type="range" min="50" max="150" step="1" value="100"> <output id="blue-value">100 %</output></label>
-<p class="wbnote">They change the picture, not the game. Each mode keeps its own settings.</p>
-<button id="look-reset" class="wbitem" type="button">Default picture for this mode</button>
+<div id="wb-nastaveni-display"></div>
+<p class="wbnote">Zoom = window width in multiples of the Original width (293 px), in whole display pixels. Pixel width like the width knob of a monitor: 1.00 = square pixels, 1.04 = PAL television. The knobs and RGB channels change the picture, not the game. Each mode keeps its own settings.</p>
 <hr>
 <button id="fullscreen" class="wbitem" type="button" data-close-menu>Fullscreen <kbd>F</kbd></button>
+</div>
+</div>
+<div class="wbmenu">
+<button id="menu-sound" class="wbtitle" type="button" aria-expanded="false" aria-controls="sound-panel">Sound</button>
+<div id="sound-panel" class="wbpanel" aria-labelledby="menu-sound" hidden>
+<div id="wb-nastaveni-sound"></div>
+<p class="wbnote">The game's own sound effects through a model of the Paula chip; M turns sound on and off. The Amiga has channels 0 and 3 on the left, 1 and 2 on the right: stereo width 100 % = as the Amiga, 0 % = mono. Amiga 500 output filters; the LED filter "as the game" follows the game, which switches it off. Each mode keeps its own settings.</p>
 </div>
 </div>
 <div id="wbstatus"><output id="status" role="status">Insert your disks to play.</output><output id="wbnotice" role="status" hidden></output></div>
@@ -115,6 +109,8 @@
 </main>
 <script src="wb-menu.js"></script>
 <script src="wb-obraz.js"></script>
+<script src="wb-nastaveni.js"></script>
+<script src="wb-zvuk.js"></script>
 <script src="wb-seal.js"></script>
 <script src="present.js"></script>
 <script src="render.js"></script>

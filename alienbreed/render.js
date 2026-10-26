@@ -452,8 +452,8 @@ const RENDER = (() => {
         // prechazi do dalsiho snimku (konec za radkem 312 = okno zustane otevrene); bez st okno jen mezi radky start..stop v tomto snimku
         // Se st navic sbernice jako hardware (zmereno proti vAmize, docs/RENDER.md 15, „smeti“ terminalu Intex): copper cte jen v sudych
         // taktech, ktere nebere bitplan; zapis BPLxPT s presnym taktem a zahozeni, kdyz bitplan pouzil ukazatel o takt driv; ukazatele
-        // pokracuji z konce minuleho snimku (st.ptr); st.lines = radku snimku (stranka 313, vAmiga 312)
-        let vOpen = !!(st && st.vOpen); const NL = (st && st.lines) || 313;
+        // pokracuji z konce minuleho snimku (st.ptr); st.lines = radku snimku (312 jako original a vAmiga)
+        let vOpen = !!(st && st.vOpen); const NL = (st && st.lines) || 312;
         const R = new Uint16Array(256); if (init) R.set(init.subarray ? init.subarray(0, 256) : init);
         if (st && st.diw) { R[0x08e >> 1] = st.diw[0]; R[0x090 >> 1] = st.diw[1]; }
         if (st && st.ptr) R.set(st.ptr, 0xe0 >> 1);   // DIWSTRT/DIWSTOP z konce minuleho snimku (zapsal je copper)

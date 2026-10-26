@@ -3,11 +3,11 @@
  "files": [
   {
    "path": "native-core.wasm",
-   "iv": "H1qWdVF6MYJ42XEU",
-   "size": 11157244,
-   "sha256": "3a1cda0721279b627529c8f2f494d40aac16a8ecaa366c26d13733e80ad6b8c7",
+   "iv": "kfA/Ktf7wPG6Fb54",
+   "size": 11160091,
+   "sha256": "f0a7482de070a0429a7f810af08b2975469de6c56c3c595fc182909898ddfa0a",
    "encoding": "gzip",
-   "stored": 1327604
+   "stored": 1329105
   }
  ],
  "keys": [
@@ -16,14 +16,14 @@
     "af8ef14cf9729d9d41ec5a6705c4b4342ae9844db33ea5bb6cd91ff39a3175b6",
     "4b782994d649132d1d03c66d84f708ad42fecaf5e49dd5e28e646d2e51626961"
    ],
-   "iv": "fGj1HqhZ4QzR/iKf",
-   "wrapped": "LJ0IEcYVTap3uRIsdYUd+NuzcijRdDIcoBWyVA1cWmOc+Pc5NJXYoNFGZ3xw+6A2",
+   "iv": "pG1WIkEd+TGcV0fN",
+   "wrapped": "O/OkVXgmF9tHqceRo+U+/I82EAj4vEeqxPeDDQt29qTubUEsd0V1/EII8B3qpxoa",
    "label": "Fairlight 2-disk"
   },
   {
    "payload": "a3350ba053fe8a81591a6ba708e803c0f2f0190383a72add076e7b59720bc4c7",
-   "iv": "ejkTq4MJOpM/q5BW",
-   "wrapped": "LuEADo/6TC5xb/9A7XJEk+7pAODryIfGRNCsjuRgMCJHUesn2TZWW8QP1ebER8uy",
+   "iv": "9RCvSYRZXEdEJqgF",
+   "wrapped": "Hq01SMqGiUGGnnBTpDm5WQWCHOVPHNSRyIh+zUiQPIuR3/qt6VsjQDX5jSJxDqFT",
    "label": "any disks with the same game files"
   }
  ]

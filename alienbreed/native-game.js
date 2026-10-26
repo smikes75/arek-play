@@ -9,9 +9,10 @@
     // prezentace: start v rezimu Original, po 5 s hrani levelu (viditelny obraz, bez pauzy) prepnout do Vylepseno; jednou za nacteni
     // stranky, E nebo menu to zrusi. presDemo = odehrane ms, -1 = vypnuto
     let presDemo = PRES ? 0 : -1; const PRES_DEMO_MS = 5000;
-    const $ = (id) => document.getElementById(id) || (PRES ? dummies.get(id) || dummies.set(id, document.createElement('input')).get(id) : null);
+    // chybejici prvek (prezentace, nebo stranka s menu kitu bez dosavadnich ovladacu) = zastupny input: stary kod na nej pise bez chyby
+    const $ = (id) => document.getElementById(id) || dummies.get(id) || dummies.set(id, document.createElement('input')).get(id);
     const STORE_KEY = 'alien-breed-native-game-v1';
-    const FRAME_MS = 568408 / 28375.16, CHIP = 0x80000, SLOWOFF = 0x80000;   // 20,0317 ms: PAL snimek vAmigy (313 radku), ne 20,0
+    const FRAME_MS = 312 * 227 * 8 / 28375.16, CHIP = 0x80000, SLOWOFF = 0x80000;   // 19,9679 ms: PAL snimek originalu (312 radku, LOF 0; docs/NATIVE.md 5p), ne 20,0
     // Vyrezy v souradnicich okna hry (293 x 240 = DIW 142..434 x radky 52..291): Original = cela obrazovka 320 x 256 jako na Amize
     // (okno na (13, 9), HUD radky 43..51 nahore a 293..300 dole), Vylepseno = hraci plocha 448 x 256 (jako Turrican) vystredena na okno + HUD pruhy.
     const HUD_TOP = 9, HUD_BOT = 7, WIN_W = 293, WIN_H = 240;
@@ -22,12 +23,12 @@
     // bez ver 2 (pred 1.2): sdilene CRT a knofliky do obou rezimu, hodnoty rovne starym vychozim (CRT vyp, Original standardni, Vylepseno
     // rozmazani 24 %, Original bez rozmazani) prejdou na nove vychozi.
     const W0 = VIEWPORTS.orig.w;   // sirka vyrezu Originalu (293): zoom = sirka okna v nasobcich W0 (1.1)
-    // pomer pixelu PAL (jako Turrican a Superfrog): televize PAL vzorkuje ctvercove body 14,75 MHz, Amiga lores 7,09379 MHz -> lores pixel
-    // 14,75 / 14,1875 = 1,0397 krat sirsi nez vysoky. Jen zobrazeni; prezentace bez nej (kontrakt kitu = cele pixely na sirku i vysku)
-    const PAL_PAR = 14.75 / 14.1875;
+    // sirka bodu (kontrakt obrazu 1.4, menu kitu wb-par 1,00-1,10): PAL televize 14,75 / 14,1875 = 1,04 (kit WB-OBRAZ-CRT 1.5);
+    // vychozi Original 1,00 / Vylepseno 1,04 (MENU-ZVUK.md, i prezentace); jen zobrazeni
+    const PAR_DEFAULT = { original: 1, enhanced: 1.04 };
     const PREFS_VER = 2, KNOBS = ['brightness', 'contrast', 'saturation'], CHANNELS = ['red', 'green', 'blue'];   // CHANNELS: kanaly RGB 50-150 % (RENDER.setChannels)
-    const VIEW_DEFAULTS = { original: { ...WBOBRAZ.VIEW_DEFAULTS.original, crtShape: 'lines', smooth: false, par: false, brightness: 100, contrast: 100, saturation: 100, red: 100, green: 100, blue: 100 },
-        enhanced: { ...WBOBRAZ.VIEW_DEFAULTS.enhanced, crtShape: 'lines', smooth: true, par: !PRES, brightness: 100, contrast: 100, saturation: 100, red: 100, green: 100, blue: 100 } };
+    const VIEW_DEFAULTS = { original: { ...WBOBRAZ.VIEW_DEFAULTS.original, crtShape: 'lines', smooth: false, par: PAR_DEFAULT.original, brightness: 100, contrast: 100, saturation: 100, red: 100, green: 100, blue: 100 },
+        enhanced: { ...WBOBRAZ.VIEW_DEFAULTS.enhanced, crtShape: 'lines', smooth: true, par: PAR_DEFAULT.enhanced, brightness: 100, contrast: 100, saturation: 100, red: 100, green: 100, blue: 100 } };
     const VIEW_KEYS = Object.keys(VIEW_DEFAULTS.original), OLD_DEFAULTS = { original: { crtDetail: 'standard' }, enhanced: { blur: 24 } };
     const DEFAULTS = { mode: 'enhanced', viewport: 'w448' };
     const CRT_DETAILS = WBOBRAZ.CRT_DETAILS, MODE_MS = WBOBRAZ.MODE_MS;   // prechod Original <-> Vylepseno, smoothstep
@@ -54,7 +55,7 @@
             o.crtShape = WBOBRAZ.CRT_SHAPES.includes(v.crtShape) ? v.crtShape : d.crtShape;
             o.smooth = typeof v.smooth === 'boolean' ? v.smooth : d.smooth;   // Original: vychozi vypnuto (meridlo), od 2026-10-22 lze zapnout rucne
             o.blur = num(v.blur, 0, 100, d.blur);
-            o.par = typeof v.par === 'boolean' && !PRES ? v.par : d.par;
+            o.par = typeof v.par === 'boolean' ? (v.par ? 1.04 : 1) : num(v.par, 1, 1.1, d.par);   // drive zapnuto/vypnuto
             o.brightness = num(v.brightness, 50, 150, 100); o.contrast = num(v.contrast, 50, 150, 100); o.saturation = num(v.saturation, 0, 200, 100);
             for (const k of CHANNELS) o[k] = num(v[k], 50, 150, 100);
         }
@@ -64,7 +65,11 @@
     // zoom, crt, crtDetail, smooth, blur, jas, kontrast, sytost = hodnoty prave zobrazeneho rezimu (neserializuji se, ulozi se prefs.views);
     for (const k of VIEW_KEYS) Object.defineProperty(prefs, k, { enumerable: false, get: () => prefs.views[prefs.mode][k], set: (v) => { prefs.views[prefs.mode][k] = v; } });
     const savePrefs = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(prefs)); } catch (e) { /* bez ulozeni */ } };
-    const canvas = $('screen'), ctx = canvas.getContext('2d', { alpha: false }), gameEl = document.querySelector('.game');
+    let menu = null;   // spolecne menu kitu (wb-nastaveni.js), nize; prezentace ho nema
+    const MENU_KEY = 'ab-native-wb-nastaveni-v1';
+    const canvas = $('screen'), gameEl = document.querySelector('.game');
+    let ctx = canvas.getContext('2d', { alpha: false });   // let: Original se sirkou bodu kresli pres pomocne platno (drawFrame)
+    const mid = document.createElement('canvas'), midCtx = mid.getContext('2d', { alpha: false });
     const logEl = $('log'), log = (t) => { logEl.textContent += t + '\n'; logEl.scrollTop = logEl.scrollHeight; };
     const held = new Set();
     // gamepad a joystick (web/native-input.js): stav ctu v kazdem snimku displeje (i v pauze kvuli Start), do hry jde spolu s klavesnici
@@ -73,12 +78,37 @@
     try { const ps = JSON.parse(localStorage.getItem(PAD_KEY) || 'null'); if (PADS && ps && typeof ps === 'object') { if (/^(auto|\d{1,2})$/.test(ps.pad)) PADS.preferred = ps.pad; if (/^(auto|\d{1,2})$/.test(ps.fire)) PADS.fireButton = ps.fire; } } catch (e) { /* vychozi */ }
     const shell = new WbMenu.Shell($('shell') || document.querySelector('.wbshell'), { suspend: () => { held.clear(); paused = true; }, restore: () => { paused = manualPause; canvas.focus({ preventScroll: true }); } });
     let core = null, mem = null, memBase = 0, seedMeta = null, running = false, paused = false, manualPause = false;
-    // zvuk: zapisy hry do Pauly po snimcich -> model cipu -> AudioWorklet (web/native-audio.js); predvolby spolecne pro oba rezimy
-    const AUDIO = NativeAudio.create(), SOUND_KEY = 'ab-native-sound';
-    const sound = (() => { try { const r = JSON.parse(localStorage.getItem(SOUND_KEY) || '{}'); return { on: r.on !== false, volume: typeof r.volume === 'number' && r.volume >= 0 && r.volume <= 1 ? r.volume : 0.5 }; } catch (e) { return { on: true, volume: 0.5 }; } })();
+    // zvuk: zapisy hry do Pauly po snimcich -> model cipu -> AudioWorklet (web/native-audio.js); predvolby spolecne pro oba rezimy,
+    // jen sirka sterea plati pro Vylepseno (Original vzdy tvrde stereo jako Amiga; prezentace bez volby, tvrde stereo)
+    const AUDIO = NativeAudio.create(typeof WBZVUK !== 'undefined' && document.getElementById('wb-nastaveni-sound') ? { zvuk: WBZVUK } : undefined), SOUND_KEY = 'ab-native-sound';
+    const sound = (() => { try { const r = JSON.parse(localStorage.getItem(SOUND_KEY) || '{}'); return { on: r.on !== false, volume: typeof r.volume === 'number' && r.volume >= 0 && r.volume <= 1 ? r.volume : 0.5, width: typeof r.width === 'number' && r.width >= 0 && r.width <= 1 ? r.width : 0.7, source: r.source !== false }; } catch (e) { return { on: true, volume: 0.5, width: 0.7, source: true }; } })();
     const saveSound = () => { try { localStorage.setItem(SOUND_KEY, JSON.stringify(sound)); } catch (e) { /* bez ulozeni */ } };
     AUDIO.setEnabled(sound.on); AUDIO.setVolume(sound.volume);
-    const unlockAudio = () => { if (sound.on) AUDIO.unlock().catch((e) => log('zvuk: ' + e.message)); };
+    const stereoWidth = () => (prefs.mode === 'enhanced' && !PRES ? sound.width : 1);   // Original: kanaly 0+3 vlevo, 1+2 vpravo beze zmeny
+    // zvuky hrace uprostred (Vylepseno, docs/NATIVE.md 5q): vzorky efektu z tabulky hry 0xC24FC8 (18 B na efekt, prvni long = adresa
+    // vzorku); vystrel = efekt zbrane hrace 1 (+0x180, zmereno 0x25), prazdny zasobnik 0x2F, klic 0x16, dvere 0x17, penize 0x1E,
+    // zraneni 0x21, terminal Intex 0x0D/0x0E/0x30; okolni zvuk levelu 0x6F588 a hlasove buffery 0x7DE3A/0x7DF3A (kanal 3, levely 1-2)
+    const CENTER_FX = [0x2f, 0x16, 0x17, 0x1e, 0x21, 0x0d, 0x0e, 0x30], CENTER_FIXED = [0x6f588, 0x7de3a, 0x7df3a];
+    const slowW = (a) => (mem[a - 0xc00000 + 0x80000] << 8) | mem[a - 0xc00000 + 0x80001];
+    function stereoCenter() {
+        if (prefs.mode !== 'enhanced' || PRES || !sound.source || !core || core._core_module() !== 0 || !cur || cur.screen) return null;   // jen v levelu
+        const fx = (e) => (((slowW(0xc24fc8 + 18 * e) << 16) | slowW(0xc24fc8 + 18 * e + 2)) >>> 0) & 0x1ffffe;
+        return new Set([fx(slowW(0xc05872 + 0x180)), ...CENTER_FX.map(fx), ...CENTER_FIXED]);
+    }
+    // nastaveni zvuku zobrazeneho rezimu: z menu kitu (po rezimech), bez nej dosavadni ab-native-sound (prezentace)
+    const soundNow = () => menu ? menu.getMode(prefs.mode, 'sound') : { sound: sound.on, volume: Math.round(sound.volume * 100), stereo: 100, 'filter-fixed': true, 'filter-led': 'auto', 'filter-hp': true };
+    // filtr LED podle hry: CIA-A PRA bit 1; po Kickstartu 0 (LED sviti, filtr zapnuty - vAmiga: PRA 0xFC v uvodu), hra ho jedinym zapisem
+    // bset #1,$BFE001 na 0xC0F194 vypne (zacatek hlavniho programu: s uvodem krok 2 811, bez uvodu hned; vAmiga ve hre PRA 0xDE). Jadro
+    // zapisy do CIA nemodeluje, proto podle pokryti kodu (COVER, sestaveni stranky). Prezentace jadro bez COVER a start bez uvodu:
+    // hra LED vypne hned v prvnim kroku (corelab, present + bez uvodu) -> vypnuto
+    const ledOn = () => { if (PRES || !core || !core._core_cover) return false; const p = core._core_cover(); return !!p && core.HEAPU8[p + ((0xc0f194 >>> 1) & 0x3ffff)] === 0; };
+    let ledLast = null;
+    function applySound() {
+        if (!menu) return;
+        const so = soundNow(); ledLast = ledOn();
+        AUDIO.setSettings({ on: so.sound, volume: so.volume, stereo: so.stereo, filterFixed: so['filter-fixed'], filterLed: so['filter-led'], filterHp: so['filter-hp'] }, ledLast);
+    }
+    const unlockAudio = () => { if (soundNow().sound) AUDIO.unlock().catch((e) => log('zvuk: ' + e.message)); };
     let acc = 0, lastNow = 0, steps = 0, stats = { stepMs: 0, renderMs: 0, frames: 0, spritePixels: 0, screenSkips: 0, slowFrames: 0 };
     let stepClock = 0;   // nominalni cas posledniho kroku (performance.now ms): kroky v t0 + n * 20 ms, interpolace mezi nimi
     let scaleInfo = { S: 3, z: 3, dpr: 1 };   // S = pixely zarizeni na herni pixel, z = CSS px na herni pixel (S / dpr), zoom = sirka v nasobcich W0
@@ -258,7 +288,8 @@
         if (held.has('Space') || (PAD && PAD.space)) { mem[SLOWOFF + 0x21208] = 0x40; spaceDown = true; } else if (spaceDown) { mem[SLOWOFF + 0x21208] = 0xc0; spaceDown = false; }
         const t0 = performance.now();
         wake(); steps++; objStep();
-        AUDIO.frame(core, mem);
+        AUDIO.setCenter(stereoCenter()); AUDIO.frame(core, mem);
+        if (menu && ledOn() !== ledLast) applySound();   // hra vypnula filtr LED (jednou za beh)
         stats.stepMs = performance.now() - t0;
         if (core._core_fault() && !faultShown) {   // chyba prekladu: hra stoji, misto tiche zamrznuti ohlasit adresu (docs/NATIVE.md 5d)
             faultShown = true; manualPause = paused = true;
@@ -440,7 +471,7 @@
         const S = WBOBRAZ.deviceScale(zoomPref, W0, sz.w, dpr, limit);
         return { S, z: S / dpr, dpr, limit, zoom: S / dpr * sz.w / W0 };
     }
-    function lookOf(m) { const v = prefs.views[m]; return { mode: m, detail: v.crtDetail, shape: v.crtShape, on: v.crt ? 1 : 0, blur: v.blur, par: v.par ? PAL_PAR : 1, brightness: v.brightness, contrast: v.contrast, saturation: v.saturation, red: v.red, green: v.green, blue: v.blue }; }
+    function lookOf(m) { const v = prefs.views[m]; return { mode: m, detail: v.crtDetail, shape: v.crtShape, on: v.crt ? 1 : 0, blur: v.blur, par: v.par, brightness: v.brightness, contrast: v.contrast, saturation: v.saturation, red: v.red, green: v.green, blue: v.blue }; }
     /** Vzhled okna w x h hernich pixelu pri pixel CSS px na herni pixel (behem prechodu necele): filtr platna (knofliky, rozmazani
      *  0,8 herniho pixelu pri 100 %) a vrstva CRT pres obsah v pixelech zarizeni (Original perioda = herni radek, Vylepseno mrizka 2/3/4). */
     function applyLook(L, w, h, pixel, dpr) {
@@ -450,11 +481,12 @@
         lastLook = L;
     }
     function applyDisplay() {
+        if (menu && menu.mode !== prefs.mode) menu.setMode(prefs.mode);   // menu ukazuje a meni hodnoty zobrazeneho rezimu
         drawDirty = true;
         if (modeAnim) { updateControls(); return; }   // prechod: rozmer platna ridi draw, po dobehnuti zavola applyDisplay znovu
         const vp = viewport(), enhanced = prefs.mode === 'enhanced';
         // backing platna = presne pixely zarizeni (S cele), jinak se obraz prevzorkuje a posun 1,67 px na snimek displeje se laame na nestejne kroky
-        const par = prefs.par ? PAL_PAR : 1, sz = screenSize(), { S, z, dpr, limit, zoom } = zoomFor(vp, prefs.zoom, par);   // nevejde se do okna: mensi zoom, ale backing stale = pixely zarizeni
+        const par = prefs.par, sz = screenSize(), { S, z, dpr, limit, zoom } = zoomFor(vp, prefs.zoom, par);   // nevejde se do okna: mensi zoom, ale backing stale = pixely zarizeni
         // 1.3: backing = obsah W*S x H*S zaokrouhleny nahoru na krok rozvrzeni q (Chromium uklada rozmery po 1/64 CSS px: dpr 1,25 q 5,
         // 1,5 q 3), hra kresli do leveho horniho W*S x H*S, zbytek cerny; jinak se platno prevzorkuje (zdvojeny/zkraceny radek)
         // PAL: backing o 4 % sirsi (zase cele pixely zarizeni), kresleni vodorovne natazene transformaci (draw), ne CSS (to by zdvojovalo sloupce)
@@ -464,13 +496,13 @@
         gameEl.style.width = (bw / dpr + 2) + 'px'; canvas.style.height = (bh / dpr + 2) + 'px';   // vyska explicitne: aspect-ratio by u border-box zahrnul ramecek
         scaleInfo = { S, z, dpr, limit, zoom, par };
         gameEl.classList.toggle('smooth', enhanced); gameEl.classList.remove('mode-changing');
-        applyLook(lookOf(prefs.mode), sz.w, sz.h, z, dpr);
+        applyLook(lookOf(prefs.mode), sz.w, sz.h, z, dpr); AUDIO.setWidth(stereoWidth()); applySound();
         if (cur && cur.rgb !== RENDER.channels()) recolor();   // zobrazeny snimek se starymi kanaly (pauza, menu, stojici obrazovka)
         updateControls();
         screen.align();
     }
     function updateControls() {   // ovladaci prvky menu podle rezimu (i behem prechodu, platno pak ridi draw)
-        const vp = viewport(), enhanced = prefs.mode === 'enhanced', t = zoomFor(vp, prefs.zoom, prefs.par ? PAL_PAR : 1);
+        const vp = viewport(), enhanced = prefs.mode === 'enhanced', t = zoomFor(vp, prefs.zoom, prefs.par);
         for (const k of KNOBS.concat(CHANNELS)) { $(k).value = prefs[k]; $(k + '-value').textContent = prefs[k] + ' %'; }
         $('run-state').textContent = enhanced ? 'Vylepšeno' : 'Originál';
         $('mode-original').setAttribute('aria-pressed', String(!enhanced)); $('mode-enhanced').setAttribute('aria-pressed', String(enhanced));
@@ -479,7 +511,7 @@
         $('zoom').value = prefs.zoom; $('zoom-value').textContent = zoomLabelCz(prefs.zoom, t.S, t.dpr, W0, screenSizeOf(vp).w);
         for (const b of document.querySelectorAll('[data-zoom]')) b.setAttribute('aria-pressed', String(parseFloat(b.dataset.zoom) === prefs.zoom));
         $('par').checked = prefs.par; $('crt').checked = prefs.crt; $('crt-detail').value = prefs.crtDetail; $('crt-shape').value = prefs.crtShape; $('blur').value = prefs.blur; $('blur-value').textContent = prefs.blur + ' %';
-        $('display-status').textContent = 'Výřez ' + vp.w + ' × ' + vp.h + (vp.hud ? ' + HUD' : '') + ' · plátno ' + canvas.width + ' × ' + canvas.height + ' px zařízení, celé pixely ×' + t.S + (t.dpr !== 1 ? ' (dpr ' + t.dpr + ')' : '') + (prefs.par ? ', na šířku × 1,04 (PAL)' : '');
+        $('display-status').textContent = 'Výřez ' + vp.w + ' × ' + vp.h + (vp.hud ? ' + HUD' : '') + ' · plátno ' + canvas.width + ' × ' + canvas.height + ' px zařízení, celé pixely ×' + t.S + (t.dpr !== 1 ? ' (dpr ' + t.dpr + ')' : '') + (prefs.par !== 1 ? ', šířka bodu × ' + prefs.par.toFixed(2).replace('.', ',') : '');
     }
     function pollPad() {                   // gamepad: smery a fire bere step(), tady hrany Y (Original / Vylepseno) a Start (pauza)
         if (!PADS) return;
@@ -529,7 +561,7 @@
         let vp = viewport(), sz = screenSize(), S = scaleInfo.S, par = scaleInfo.par || 1;   // backing muze byt o krok q sirsi nez obsah (1.3)
         if (anim) {   // prechod: vyrez a zoom animovane, backing = vetsi S obou rezimu, platno o celych pixelech nad animovanym vyrezem
             vp = { x0: anim.x0, y0: anim.y0, w: anim.w, h: anim.h, hud: true }; sz = screenSizeOf(vp); S = modeAnim.S;
-            const fp = modeAnim.fromLook.par || 1; par = fp + ((prefs.par ? PAL_PAR : 1) - fp) * anim.e;   // pomer pixelu se prolina
+            const fp = modeAnim.fromLook.par || 1; par = fp + (prefs.par - fp) * anim.e;   // pomer pixelu se prolina
             const cw = Math.ceil(sz.w * S * par), ch = Math.ceil(sz.h * S);
             if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
             gameEl.style.width = (cw / S * anim.z + 2) + 'px'; canvas.style.height = (sz.h * anim.z + 2) + 'px';
@@ -542,7 +574,15 @@
         screen.align();   // poloha obsahu na celem pixelu zarizeni (1.4): i po zmene sirky behem prechodu nebo posuvniku stage
         const hudL = hudOf(vp), top = hudL.top;
         ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.save(); if (par !== 1) ctx.setTransform(par, 0, 0, 1, 0, 0);   // pomer pixelu PAL: vse nize vodorovne natazene (souradnice dal v S)
+        // sirka bodu (1.4): Vylepseno vodorovnou transformaci (kresli vyhlazene), Original s ostrymi body po celych bodech do pomocneho
+        // platna a pak jen vodorovne prevzorkovat s vyhlazenim (jako kit O.blit: zadny sirsi sloupec, radky presne)
+        const two = par !== 1 && !(prefs.mode === 'enhanced' || anim), main = ctx;
+        if (two) {
+            const w1 = Math.ceil(canvas.width / par);
+            if (mid.width !== w1 || mid.height !== canvas.height) { mid.width = w1; mid.height = canvas.height; }
+            ctx = midCtx; ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, w1, canvas.height);
+        }
+        ctx.save(); if (par !== 1 && !two) ctx.setTransform(par, 0, 0, 1, 0, 0);   // souradnice nize dal v S
         if (cur && cur.screen) {   // obrazovka mimo level: pozice 142 a radek 52 jako okno hry, nahore a dole to, co obrazovka ma (HUD se nekresli)
             ctx.imageSmoothingEnabled = false;
             ctx.drawImage(cur.screen, (SCR.h0 - 142 - vp.x0) * S, (top + SCR.l0 - 52 - vp.y0) * S, SCR.w * S, SCR.h * S);   // radek 52 = radek 0 okna hry pod HUD
@@ -624,6 +664,7 @@
             if ((stats.frames & 15) === 0) $('frame-status').textContent = 'Krok ' + steps + ', hráč (' + cur.px + ', ' + cur.py + '), kamera (' + cur.camX + ', ' + cur.camY + '), krok ' + stats.stepMs.toFixed(2) + ' ms, obraz ' + stats.renderMs.toFixed(2) + ' ms, blitů ' + core._core_blits() + '; plynulost: ' + meter.dup + ' dvojitých z ' + meter.moving + ' pohybových snímků, sprite chyběl ' + meter.spriteMissing + '×, backing ' + scaleInfo.S + '× při dpr ' + scaleInfo.dpr + '.';
         }
         ctx.restore();   // transformace PAL jen pro snimek hry (testovaci vzor kontraktu kresli bez ni)
+        if (two) { ctx = main; ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(mid, 0, 0, mid.width, mid.height, 0, 0, mid.width * par, mid.height); ctx.imageSmoothingEnabled = false; }
         requestAnimationFrame(draw);
     }
     function start() { if (!core || !seedMeta) return; $('intro').hidden = true; gameEl.hidden = false; running = true; paused = false; manualPause = false; lastNow = performance.now(); stepClock = lastNow; acc = 0; applyDisplay(); capture(); canvas.focus(); requestAnimationFrame(draw); }
@@ -693,9 +734,9 @@
         if (m === prefs.mode && !modeAnim) return;
         const now = performance.now(), from = shownVisual(now), fromMode = modeAnim ? (modeSample(now) && modeAnim.e < .5 ? modeAnim.fromMode : prefs.mode) : prefs.mode;
         const fromLook = lastLook ? { ...lastLook } : lookOf(fromMode), fromVp = modeAnim ? captureViewport() : viewport();
-        prefs.mode = m; savePrefs();   // held se nemaze: drzena sipka by po stisku E uz neprisla znovu (opakovani patri E) a hrac by stal
+        prefs.mode = m; savePrefs(); if (menu && menu.mode !== m) { menu.setMode(m); syncZoom(); }   // held se nemaze: drzena sipka by po stisku E uz neprisla znovu (opakovani patri E) a hrac by stal
         const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const toVp = viewport(), zt = zoomFor(toVp, prefs.zoom, prefs.par ? PAL_PAR : 1), zf = zoomFor(fromVp, prefs.views[fromMode].zoom, prefs.views[fromMode].par ? PAL_PAR : 1);
+        const toVp = viewport(), zt = zoomFor(toVp, prefs.zoom, prefs.par), zf = zoomFor(fromVp, prefs.views[fromMode].zoom, prefs.views[fromMode].par);
         if (running && !reduce) {
             modeAnim = { from, to: { x0: toVp.x0, y0: toVp.y0, w: toVp.w, h: toVp.h, z: zt.z }, fromVp: VIEWPORTS.w448, toVp, start: now, S: Math.max(zt.S, zf.S, scaleInfo.S), fromMode, fromLook };
             gameEl.classList.add('mode-changing');   // bez CSS prechodu: --crt-on ridi animace (4)
@@ -703,6 +744,58 @@
         } else { modeAnim = null; applyDisplay(); }
         updateControls();
         const vp = viewport(); shell.message(m === 'enhanced' ? 'Vylepšeno: hrací plocha ' + vp.w + ' × ' + vp.h + ' + HUD' : 'Originál: okno hry 293 × 240 + HUD'); }
+    // ---- spolecne menu kitu (wb-nastaveni.js 1.1, MENU-ZVUK.md): Obraz a Zvuk po rezimech, ulozene pod MENU_KEY; je zdrojem hodnot,
+    // prefs.views je jejich kopie pro kresleni (dosavadni jmena crtDetail, crtShape, ...). Prezentace stejne, anglicky, vlastni klic.
+    const NAST = typeof WBNASTAVENI !== 'undefined' ? WBNASTAVENI : typeof WBMENU !== 'undefined' ? WBMENU : null;
+    const MENU_MAP = { zoom: 'zoom', crt: 'crt', 'crt-detail': 'crtDetail', 'crt-shape': 'crtShape', blur: 'blur', brightness: 'brightness', contrast: 'contrast',
+        saturation: 'saturation', red: 'red', green: 'green', blue: 'blue', par: 'par', smooth: 'smooth' };
+    // zvetseni (MENU-ZVUK, wb-nastaveni 1.1 spec.zoom = 'snap'): posuvnik po zvetsenich, ktera displej ukaze presne = cele pixely zarizeni
+    // na herni pixel S (zoom = S / dpr * sirka vyrezu / W0, jako zoomFor), do 6x; vyrez a dpr podle zobrazeneho rezimu
+    function zoomSteps() {
+        const dpr = window.devicePixelRatio || 1, w = screenSizeOf(viewportOf(menu ? menu.mode : prefs.mode)).w, out = [];
+        for (let S = 1; S / dpr * w / W0 <= 6 + 1e-9; S++) { const z = +(S / dpr * w / W0).toFixed(6); out.push({ value: z, label: z.toFixed(2).replace('.', ',').replace(/,00$/, '') + '×' }); }
+        return out;
+    }
+    function syncZoom() {   // po zmene okna, dpr nebo rezimu: kroky jine, hodnota menu se prichyti; prefs ji prevezme, kdyz ji sledoval
+        if (!menu) return;
+        const before = menu.getMode(prefs.mode, 'display').zoom, follow = prefs.views[prefs.mode].zoom === before;
+        menu.refreshZoom(); if (follow) prefs.views[prefs.mode].zoom = menu.getMode(prefs.mode, 'display').zoom;
+    }
+    function menuToViews() { for (const m of ['original', 'enhanced']) { const d = menu.getMode(m, 'display'), v = prefs.views[m]; for (const [id, k] of Object.entries(MENU_MAP)) v[k] = d[id]; } }
+    if (NAST && document.getElementById('wb-nastaveni-display')) {
+        const store = PRES ? 'ab-present-wb-nastaveni-v1' : MENU_KEY;
+        let fresh = false; try { fresh = !localStorage.getItem(store); } catch (e) { /* bez ulozeni */ }
+        menu = NAST.build(document.createElement('div'), { store, lang: PRES ? 'en' : 'cs', mode: prefs.mode, zoom: 'snap', zoomSteps });
+        const [fsDisplay, fsSound] = menu.root.querySelectorAll('fieldset');
+        document.getElementById('wb-nastaveni-display').appendChild(fsDisplay); document.getElementById('wb-nastaveni-sound').appendChild(fsSound);
+        const row = document.getElementById('stereo-source-row'); if (row) menu.extras.sound.appendChild(row);
+        const fit = document.createElement('button'); fit.type = 'button'; fit.id = 'zoom-fit'; fit.className = 'wbitem'; fit.textContent = PRES ? 'Zoom to fit the window' : 'Zvětšení do okna';
+        fit.addEventListener('click', () => menu.set('display', 'zoom', 0)); menu.extras.display.appendChild(fit);
+        for (const b of document.querySelectorAll('.wb-nastaveni-defaults')) b.classList.add('wbitem');   // tlacitka vychozich hodnot jako polozky panelu
+        if (fresh) {   // prvni spusteni s menu kitu: dosavadni obraz (prefs.views po rezimech) a zvuk (ab-native-sound: zap., hlasitost, sirka Vylepseno)
+            let old = null; try { old = JSON.parse(localStorage.getItem(SOUND_KEY) || 'null'); } catch (e) { /* zadne */ }
+            for (const m of ['original', 'enhanced']) {
+                menu.setMode(m); const v = prefs.views[m];
+                for (const [id, k] of Object.entries(MENU_MAP)) menu.set('display', id, v[k]);   // zoom se prichyti k nejblizsimu presnemu kroku
+                if (old && typeof old.on === 'boolean') menu.set('sound', 'sound', old.on);
+                if (old && typeof old.volume === 'number') menu.set('sound', 'volume', Math.round(old.volume * 100));
+                if (old && m === 'enhanced' && typeof old.width === 'number') menu.set('sound', 'stereo', Math.round(old.width * 100));
+            }
+            menu.setMode(prefs.mode);
+        }
+        for (const m of ['original', 'enhanced']) { menu.setMode(m); menu.refreshZoom(); }   // vychozi a ulozene zvetseni na presne kroky
+        menu.setMode(prefs.mode); menuToViews();
+        menu.on('change', (st, what) => {
+            if (what === 'mode') { if (st.mode !== prefs.mode) setMode(st.mode); return; }
+            if (what !== 'sound') { menuToViews(); savePrefs(); applyDisplay(); }
+            if (what !== 'display') applySound();
+        });
+        // hacky kontraktu (arek web test §6): menu a retezec zvuku kitu (stranka hraje pres WBZVUK.chain, tedy totez co render)
+        const SIG = WBZVUK.testSignal(4096, 44100);
+        window.wbMenuTest = menu.testHooks();
+        window.wbZvukTest = { version: WBZVUK.VERSION, signal: () => ({ l: Array.from(SIG.l), r: Array.from(SIG.r) }), render: (s, led) => WBZVUK.render(s, !!led, SIG, 44100),
+            reference: (s, led) => { const [l, r] = WBZVUK.process(SIG.l, SIG.r, s, !!led, 44100); return { l: Array.from(l), r: Array.from(r) }; } };
+    }
     // ---- ovladani ----
     $('intro-start').addEventListener('click', start);
     $('skip-intro').checked = skipIntro();
@@ -728,6 +821,9 @@
     $('sound').checked = sound.on; $('volume').value = Math.round(sound.volume * 100);
     $('sound').addEventListener('change', () => { sound.on = $('sound').checked; saveSound(); AUDIO.setEnabled(sound.on); unlockAudio(); });
     $('volume').addEventListener('input', () => { sound.volume = parseInt($('volume').value, 10) / 100; saveSound(); AUDIO.setVolume(sound.volume); });
+    const showWidth = () => { $('stereo-width').value = Math.round(sound.width * 100); $('stereo-width-value').textContent = Math.round(sound.width * 100) + ' %'; };
+    if ($('stereo-source')) { $('stereo-source').checked = sound.source; $('stereo-source').addEventListener('change', () => { sound.source = $('stereo-source').checked; saveSound(); }); }
+    if ($('stereo-width')) { showWidth(); $('stereo-width').addEventListener('input', () => { sound.width = parseInt($('stereo-width').value, 10) / 100; saveSound(); showWidth(); AUDIO.setWidth(stereoWidth()); }); }
     document.addEventListener('pointerdown', unlockAudio);
     document.addEventListener('visibilitychange', () => { if (document.hidden) AUDIO.pause(); });
     function togglePause() { manualPause = !manualPause; paused = manualPause; if (paused) AUDIO.pause(); if (!paused) stepClock = performance.now(); shell.message(paused ? 'Pauza' : 'Pokračuje'); }
@@ -758,7 +854,7 @@
     if (window.indexedDB) refreshSlots().catch(() => {});
     $('fullscreen').addEventListener('click', () => { const el = $('shell'); if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen().catch(() => {}); });
     // sirka stage meni strop S (i u explicitniho zoomu) a centrovani polohu obsahu (1.4)
-    window.addEventListener('resize', () => applyDisplay()); document.addEventListener('fullscreenchange', () => applyDisplay());
+    window.addEventListener('resize', () => { syncZoom(); applyDisplay(); }); document.addEventListener('fullscreenchange', () => { syncZoom(); applyDisplay(); });
     const GAME_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyX', 'ControlLeft', 'ControlRight', 'Space']);
     document.addEventListener('keydown', (e) => {
         if (WbMenu.editable(e.target) || e.metaKey || e.altKey || shell.busy) return;
@@ -766,7 +862,10 @@
         if (GAME_KEYS.has(e.code)) { held.add(e.code); e.preventDefault(); return; }
         if (e.code === 'KeyE') { if (!e.repeat) setMode(prefs.mode === 'enhanced' ? 'original' : 'enhanced'); }
         else if (PRES && e.code === 'KeyH') PRES.help();
-        else if (e.code === (PRES ? 'KeyM' : 'KeyS')) { $('sound').checked = !$('sound').checked; $('sound').dispatchEvent(new Event('change')); shell.message(sound.on ? 'Zvuk zapnut' : 'Zvuk vypnut'); }
+        else if (e.code === (PRES ? 'KeyM' : 'KeyS')) {
+            if (menu) { const on = !soundNow().sound; menu.set('sound', 'sound', on); if (on) unlockAudio(); shell.message(on ? 'Zvuk zapnut' : 'Zvuk vypnut'); }
+            else { $('sound').checked = !$('sound').checked; $('sound').dispatchEvent(new Event('change')); shell.message(sound.on ? 'Zvuk zapnut' : 'Zvuk vypnut'); }
+        }
         else if (e.code === 'KeyP') togglePause();
         else if (e.code === 'KeyR') $('reset').click();
         else if (e.code === 'KeyF') $('fullscreen').click();
@@ -786,7 +885,7 @@
         fault: () => ({ at: core._core_fault() >>> 0, pc: core._core_fault_pc() >>> 0, module: core._core_module() }),
         state: () => cur && { n: cur.n, px: cur.px, py: cur.py, camX: cur.camX, camY: cur.camY, module: core._core_module(), level: !cur.screen },
         bootlog: () => core.UTF8ToString(core._core_bootlog()),
-        audio: () => ({ ...AUDIO.state(), ...sound }), audioStats: () => AUDIO.stats(), audioPcm: () => AUDIO.pcm(),
+        audio: () => { const a = AUDIO.state(); return { ...a, ...sound, width: a.width, widthPref: sound.width }; }, audioStats: () => AUDIO.stats(), audioPcm: () => AUDIO.pcm(),
         boot: () => seedMeta && { exit: seedMeta.exit, ticks: seedMeta.ticks, px: seedMeta.px, py: seedMeta.py },
         stepN: (n, keys) => { held.clear(); for (const k of (keys || [])) held.add(k); for (let i = 0; i < n; i++) step(); held.clear(); return window.abg.state(); },
         slowHash: async () => { const h = await crypto.subtle.digest('SHA-256', mem.subarray(SLOWOFF, SLOWOFF + 0x80000)); return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join(''); },

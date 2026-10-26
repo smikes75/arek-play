@@ -24,12 +24,13 @@
   }
  ],
  "core": {
-  "wasm_bytes": 11157244,
-  "wasm_gzip_bytes": 1327604,
+  "wasm_bytes": 11160091,
+  "wasm_gzip_bytes": 1329105,
   "build": "emcc -Oz, ASYNCIFY, TRACEPC without COVER/BRK diagnostics (tools/build-present.py)",
-  "web_core_wasm_bytes": 18113329
+  "bus_model": "arek_bus from arek 0.5.18 (arek bus copy)",
+  "web_core_wasm_bytes": 19028986
  },
- "total_bytes": 1907930,
+ "total_bytes": 1952948,
  "files": [
   {
    "path": "ABOUT.md",
@@ -47,8 +48,8 @@
   },
   {
    "path": "index.html",
-   "bytes": 9076,
-   "sha256": "7a38f154a7422dea4c4a315db1b1636db821da242b39ea3054116360413212ff",
+   "bytes": 8213,
+   "sha256": "3ba2300459be5f34761f8a9dde93e26eaee0fdc3744ae758af36621811efbe45",
    "derived": false,
    "sealed": false
   },
@@ -61,15 +62,15 @@
   },
   {
    "path": "native-audio.js",
-   "bytes": 6283,
-   "sha256": "2958cc4a880e6eeccd583b70cde118d623c4612d8c08a30e69e1e249aa03e527",
+   "bytes": 9701,
+   "sha256": "c5dff7462ecd0fc173e55dab983ab9cc9fc56854adc699025dc3e19b009f0a3c",
    "derived": false,
    "sealed": false
   },
   {
    "path": "native-core.js",
-   "bytes": 20414,
-   "sha256": "37ce637e4b30db8e1571f05a4a63d086bb1e9f0513390fb59c60b08f542a97a2",
+   "bytes": 20691,
+   "sha256": "fc71b2ccef6ca693912bcd9edbda773643b80d2b197168dd089ead504d5521c1",
    "derived": false,
    "sealed": false
   },
@@ -82,8 +83,8 @@
   },
   {
    "path": "native-game.js",
-   "bytes": 88071,
-   "sha256": "f1a2e495aa6195123db36a66a4d86d1e57d2c3547df9cfaf40d21369cfcb864a",
+   "bytes": 98479,
+   "sha256": "418c4505423b3b87969374381243480c546852214ebff9008e25687e0b551c7f",
    "derived": false,
    "sealed": false
   },
@@ -96,8 +97,8 @@
   },
   {
    "path": "paula.js",
-   "bytes": 7320,
-   "sha256": "c0992a0b6d9d8e78268ae8880897c292e4f6369b7822899b78a887040657a9e2",
+   "bytes": 8389,
+   "sha256": "cb74402efe294d4729933f45f019d217e727b43bd0db8f5fb8814a84304a2009",
    "derived": false,
    "sealed": false
   },
@@ -110,23 +111,23 @@
   },
   {
    "path": "render.js",
-   "bytes": 44856,
-   "sha256": "e83f644f27b2e856994260e320b89c73ad32846a44b8de0fc6dfb1c923369b44",
+   "bytes": 44859,
+   "sha256": "6cff1e1793b7b4f9b58578068551d32af65bbdb35cf00c64100299f81fb56dcd",
    "derived": false,
    "sealed": false
   },
   {
    "path": "sealed/native-core.wasm.sealed",
-   "bytes": 1327620,
-   "sha256": "a2d3a9577d79ff53583e0774338e9deab6222b54913b1ad4a6e1496ae16e2ddd",
+   "bytes": 1329121,
+   "sha256": "d2110b8d5e28c3af389fabbe0a757602e38574b1088b7b02c0e9d338d8fe7bde",
    "derived": true,
    "sealed": true,
-   "plain": "native-core.wasm, 11157244 B (sealed with --gzip)"
+   "plain": "native-core.wasm, 11160091 B (sealed with --gzip)"
   },
   {
    "path": "sealed/seal.json",
    "bytes": 836,
-   "sha256": "68422f753f10127c29332ef1929f4beaad332e1e2078aee5a61516b187063a79",
+   "sha256": "4c02ab3d47990fc39ec621adf0e9286d511ce1a7c3a9821fc21ee3abdf55bf1a",
    "derived": false,
    "sealed": false
   },
@@ -176,9 +177,16 @@
    "sealed": false
   },
   {
+   "path": "wb-nastaveni.js",
+   "bytes": 16330,
+   "sha256": "4e15d5cf5a5ca9bcd2cd8eb7210e1ee05a4dee96d91e10c124c8b4ea60c55515",
+   "derived": false,
+   "sealed": false
+  },
+  {
    "path": "wb-obraz.js",
-   "bytes": 11954,
-   "sha256": "9eda0e23f6e5f21e4af82db90d501230de416ddedbbe23a1de7fa01a715f66ba",
+   "bytes": 14379,
+   "sha256": "088c261dd433dda22b2ba1361967c1b1652e4f63e499961c58d68e5b054b8450",
    "derived": false,
    "sealed": false
   },
@@ -190,11 +198,22 @@
    "sealed": false
   },
   {
+   "path": "wb-zvuk.js",
+   "bytes": 10450,
+   "sha256": "f14931c2dbc0d92f95d5decac2c03ad1006413a432d193103c56937c02c36f22",
+   "derived": false,
+   "sealed": false
+  },
+  {
    "path": "wb.css",
    "bytes": 7047,
    "sha256": "e3ae697dbceb86bd65ceed3e45ef6794a15c595fc0ddb5e9a563f7083b0e9da5",
    "derived": false,
    "sealed": false
   }
- ]
+ ],
+ "source": {
+  "commit": "f76198f",
+  "dirty": false
+ }
 }

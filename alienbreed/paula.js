@@ -18,7 +18,7 @@
     Paula.prototype.reset = function () {
         this.dmacon = 0x0200; this.t = 0; this.line = 0;
         this.ch = [0, 1, 2, 3].map(() => ({ st: 0, lenL: 0, len: 0, perL: 0, volL: 0, vol: 0, dat: 0, buf: 0, enHi: false, enLo: false,
-            dr: false, adr: false, lc: 0, pt: 0, perfin: Infinity, ip: true, intreq2: false, out: 0 }));
+            dr: false, adr: false, lc: 0, pt: 0, src: 0, perfin: Infinity, ip: true, intreq2: false, out: 0, msrc: -1, mver: -1, gl: 0, gr: 0, tl: 0, tr: 0 }));
     };
     Paula.prototype.on = function (n) { return (this.dmacon & 0x200) !== 0 && (this.dmacon & (1 << n)) !== 0; };
     function per(c) { return c.perL || 0x10000; }
@@ -35,9 +35,9 @@
         if (!this.on(n)) return;   // rezim preruseni (bez DMA) hra nepouziva
         switch (c.st) {
             case 0: c.len = c.lenL; c.dr = true; c.st = 1; break;
-            case 1: c.ip = true; c.dr = true; c.pt = c.lc; if (c.len !== 1) c.len = (c.len - 1) & 0xffff; c.st = 5; break;
+            case 1: c.ip = true; c.dr = true; c.pt = c.lc; c.src = c.lc; if (c.len !== 1) c.len = (c.len - 1) & 0xffff; c.st = 5; break;
             case 5: c.perfin = t + per(c); c.vol = c.volL; c.buf = c.dat; c.dr = true; c.st = 2; pen(c, n, t, true, emit); break;
-            default: if (c.len !== 1) c.len = (c.len - 1) & 0xffff; else { c.len = c.lenL; c.pt = c.lc; c.intreq2 = true; } break;
+            default: if (c.len !== 1) c.len = (c.len - 1) & 0xffff; else { c.len = c.lenL; c.pt = c.lc; c.src = c.lc; c.intreq2 = true; } break;
         }
     };
     /** Konec bajtu (PERFIN) kanalu n v case t. */
@@ -98,14 +98,25 @@
         }
     };
     /** PCM: smicha kanaly do stereo (kanaly 0 a 3 vlevo, 1 a 2 vpravo) do casu t1 (CCK) se vzorkovaci frekvenci rate; hodnota kanalu
-     *  v case vzorku = posledni vydany bajt (jako vAmiga bez interpolace). Vraci pocet zapsanych vzorku od offset. */
-    Paula.prototype.render = function (t1, mem, rate, outL, outR, offset) {
+     *  v case vzorku = posledni vydany bajt (jako vAmiga bez interpolace). Vraci pocet zapsanych vzorku od offset.
+     *  mix (Vylepseno): { ver, a, gains(n, src) -> [L, R] } = cilovy zisk kanalu podle hraneho bloku (src = adresa, odkud kanal naposledy
+     *  nacetl ukazatel: start DMA nebo opakovani); prepocet jen pri zmene src nebo ver, skutecny zisk se k cili blizi o podil a za vzorek
+     *  (bez cvaknuti). Bez mix kanaly 0+3 vlevo, 1+2 vpravo jako Amiga. */
+    Paula.prototype.render = function (t1, mem, rate, outL, outR, offset, mix) {
         const cps = CCK_HZ / rate, ch = this.ch; let k = offset || 0;
         if (this.tr === undefined || this.tr < this.t - cps) this.tr = this.t;
         while (this.tr + cps <= t1) {
             this.tr += cps;
             this.advance(this.tr, mem, this.onEmit || null);   // onEmit: udalosti kanalu pro testy (tools/soundtest.js --pcm)
-            outL[k] = (ch[0].out + ch[3].out) / 16384; outR[k] = (ch[1].out + ch[2].out) / 16384; k++;
+            if (!mix) { outL[k] = (ch[0].out + ch[3].out) / 16384; outR[k] = (ch[1].out + ch[2].out) / 16384; k++; continue; }
+            let l = 0, r = 0;
+            for (let n = 0; n < 4; n++) {
+                const c = ch[n]; if (c.msrc !== c.src || c.mver !== mix.ver) { const g = mix.gains(n, c.src); c.tl = g[0]; c.tr = g[1]; c.msrc = c.src; c.mver = mix.ver; }
+                if (c.gl !== c.tl) { c.gl += (c.tl - c.gl) * mix.a; if (Math.abs(c.tl - c.gl) < 1e-5) c.gl = c.tl; }
+                if (c.gr !== c.tr) { c.gr += (c.tr - c.gr) * mix.a; if (Math.abs(c.tr - c.gr) < 1e-5) c.gr = c.tr; }
+                l += c.out * c.gl; r += c.out * c.gr;
+            }
+            outL[k] = l / 16384; outR[k] = r / 16384; k++;
         }
         this.advance(t1, mem, this.onEmit || null);
         return k - (offset || 0);
