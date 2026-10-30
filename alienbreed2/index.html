@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alien Breed II · rebuild</title>
+<link rel="stylesheet" href="wb.css">
+<style>
+/* obsah plátna na celých pixelech zařízení (kontrakt obrazu 1.4), bez rámečku a CSS zvětšení z wb.css – jako Superfrog */
+.game{width:auto;max-width:none;--crt-border:0px}
+#stage.nocursor,#stage.nocursor *{cursor:none}
+.stall{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:5;background:#fff;color:#0050a0;border:2px solid #0050a0;padding:6px 10px;font:12px/1.4 monospace;line-height:1.4;white-space:nowrap}
+.stall button{font:inherit;margin-left:6px}
+.stall.perfhint{top:auto;bottom:12px;color:#444;border-color:#888;pointer-events:none;white-space:normal;max-width:80%}
+.game canvas{border:0;width:auto;height:auto}
+#stage{align-content:center}
+/* přechod Original/Enhanced: plátno bývá širší než plocha – vystředit i přerostlé (ne „safe“ zarovnání vlevo) a bez posuvníků */
+#stage.mode-changing{place-items:center;overflow:hidden}
+#ab-ver{padding:3px 8px;font-size:12px;white-space:nowrap;border-left:2px solid var(--wb-blue)}
+#project-panel,#display-panel,#game-panel,#sound-panel{width:430px;max-width:calc(100vw - 8px)}
+#log{white-space:pre-wrap;font:11px/1.35 "Courier New",ui-monospace,monospace;color:var(--wb-black);max-height:150px;overflow:auto;background:#eef;padding:4px 8px;margin:4px 14px;border:1px solid var(--wb-blue)}
+#disks{list-style:none;margin:6px 14px;padding:0;text-align:left}
+#disks li{display:flex;justify-content:space-between;gap:10px;padding:1px 0}
+.disk-ok{color:#006a2a}.disk-bad{color:#a02000}
+#intro.dragover{outline:3px dashed var(--wb-orange)}
+#about{width:560px;text-align:left}
+#about p{margin:.6em 0}
+#arek-support{border-top:2px solid var(--wb-blue);margin-top:10px;padding:4px 14px 8px}
+#arek-support h3{font-size:14px;margin:.4em 0}
+.support-row{display:flex;gap:12px;align-items:flex-start}
+.support-row img{background:#fff;image-rendering:pixelated;flex:none}
+.support-btn{display:inline-block;padding:3px 10px;background:var(--wb-blue);color:#fff;text-decoration:none;font-weight:bold}
+@media (max-width:520px){.support-row{flex-direction:column}}
+</style>
+</head>
+<body>
+<main id="shell">
+<nav id="wbbar" aria-label="Main menu">
+<span class="wbname">Alien Breed II · rebuild</span>
+
+<div class="wbmenu">
+<button id="menu-project" class="wbtitle" type="button" aria-expanded="false" aria-controls="project-panel">Game</button>
+<div id="project-panel" class="wbpanel" aria-labelledby="menu-project" hidden>
+<button id="disks-insert" type="button" class="wbitem">Insert disks…</button>
+<p class="wbnote">The page contains no game data. The game is unlocked by your own Alien Breed II disk images (ADF, disks 1 and 2, disk 3 for the later levels); they stay in your browser.</p>
+<hr>
+<button id="start" type="button" class="wbitem" data-close-menu disabled>Start game</button>
+<label><input id="remember" type="checkbox" checked> Remember the disks in this browser</label>
+<button id="forget" type="button" class="wbitem">Forget saved disks</button>
+<hr>
+<button id="about-open" type="button" class="wbitem">About…</button>
+</div>
+</div>
+
+<div class="wbmenu">
+<button id="menu-display" class="wbtitle" type="button" aria-expanded="false" aria-controls="display-panel">Display</button>
+<div id="display-panel" class="wbpanel" aria-labelledby="menu-display" hidden>
+<div class="mode-picker" role="group" aria-label="Picture mode">
+<button id="mode-original" class="wbitem" type="button" aria-pressed="true">Original</button>
+<button id="mode-enhanced" class="wbitem" type="button" aria-pressed="false">Enhanced</button>
+</div>
+<p class="wbnote">E switches. Original: the game's own 320-pixel window, exactly as the Amiga drew it. Enhanced: a wider view (enemies come from beyond the old edge), smooth motion and a softer CRT. Every setting is kept per mode.</p>
+<hr>
+<div class="wbrow">Size <output id="zoom-value">fit</output></div>
+<div class="zoom-buttons" role="group" aria-label="Picture size">
+<button type="button" data-zoom="0" aria-pressed="true">fit</button>
+<button type="button" data-zoom="1" aria-pressed="false">1×</button><button type="button" data-zoom="2" aria-pressed="false">2×</button><button type="button" data-zoom="3" aria-pressed="false">3×</button><button type="button" data-zoom="4" aria-pressed="false">4×</button><button type="button" data-zoom="6" aria-pressed="false">6×</button>
+</div>
+<div id="wb-display-host"></div>
+<div id="display-extras" hidden>
+<p class="wbnote">Pixel width works like the width knob of a monitor: 1.00 = square pixels, 1.04 = PAL. Smooth motion draws the play area at your display's refresh rate; the game itself still runs at 50 Hz.</p>
+</div>
+<hr>
+<button id="fullscreen" class="wbitem" type="button" data-close-menu>Full screen <kbd>F</kbd></button>
+<output id="display-status" class="wbnote" role="status"></output>
+</div>
+</div>
+
+<div class="wbmenu">
+<button id="menu-game" class="wbtitle" type="button" aria-expanded="false" aria-controls="game-panel">Play</button>
+<div id="game-panel" class="wbpanel" aria-labelledby="menu-game" hidden>
+<button id="pause" class="wbitem" type="button" data-close-menu>Pause <kbd>P</kbd></button>
+<button id="restart" class="wbitem" type="button" data-close-menu>Restart <kbd>R</kbd></button>
+<hr>
+<label>Controller <select id="gamepad"><option value="auto">Automatic</option></select></label>
+<label>Fire button <select id="gamepad-fire" disabled><option value="auto">Automatic</option></select></label>
+<output id="gamepad-status" class="wbnote" role="status" hidden></output>
+<p class="wbnote">A gamepad or USB joystick shows up after you press one of its buttons.</p>
+<details open><summary>Controls</summary>
+<p class="wbnote">Arrows or WASD = player 1, <kbd>Ctrl</kbd> / <kbd>Z</kbd> = fire. Player 2: <kbd>I</kbd> <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd>, right <kbd>Shift</kbd> / <kbd>Enter</kbd> = fire, or a second gamepad. <kbd>M</kbd> map, <kbd>Space</kbd> Intex terminal. Gamepad: stick / d-pad, A / B / X / right trigger = fire. Touch controls appear on phones and tablets.</p>
+<p class="wbnote">E: Original / Enhanced. F: full screen. P: pause. R: restart. Esc: close the menu.</p>
+</details>
+</div>
+</div>
+
+<div class="wbmenu">
+<button id="menu-sound" class="wbtitle" type="button" aria-expanded="false" aria-controls="sound-panel">Sound</button>
+<div id="sound-panel" class="wbpanel" aria-labelledby="menu-sound" hidden>
+<div id="wb-sound-host"></div>
+<div id="sound-extras" hidden>
+<label class="wbrow"><input id="snd-plus" type="checkbox"> Enhanced sound: play sounds the game would drop</label>
+<p class="wbnote" id="snd-plus-note">The original plays 4 channels with fixed roles and drops some sounds when they collide (about 7 %). Enhanced sound moves them to a free channel. Kept per mode.</p>
+<p class="wbnote">Sound starts after a click or a key press (a browser rule).</p>
+</div>
+</div>
+</div>
+
+
+<div id="wbstatus"><output id="status" role="status">Insert your disks.</output><output id="wbnotice" role="status" hidden></output></div>
+<span id="ab-ver" title="Rebuild version">AREK · kit 0.8.4</span><span id="run-state">Enhanced</span><span class="wbgadget" aria-hidden="true"></span>
+</nav>
+
+<div id="stage">
+<section id="intro" class="wbwin" aria-label="Start">
+<h1 class="wbwtitle">Alien Breed II in your browser</h1>
+<p>Insert your Alien Breed II disk images (<code>.adf</code>, Amiga 500 version: disks 1 and 2, disk 3 for the later levels). Drop them here or choose them below. They are not uploaded anywhere.</p>
+<ul id="disks"></ul>
+<p><input id="files" type="file" accept=".adf" multiple></p>
+<p><button id="intro-start" class="primary" type="button" disabled>Start game</button></p>
+<p id="intro-status" role="status"></p>
+<p class="wbnote">Arrows · Ctrl / Z = fire · M map · Space terminal · player 2: I J K L + right Shift · E Original / Enhanced · F full screen · P pause</p>
+</section>
+<div class="game" data-crt="strong" data-mode="original" hidden>
+<canvas id="screen" width="330" height="261" tabindex="0" aria-label="Alien Breed II"></canvas>
+<canvas class="crt-layer" aria-hidden="true"></canvas>
+</div>
+</div>
+
+<div id="about-shade" class="requester-shade" hidden>
+<section id="about" class="wbwin requester" aria-label="About">
+<div class="wbwtitle"><h2>About this rebuild</h2><button type="button" data-close-dialog aria-label="Close">×</button></div>
+<p id="preview-end" hidden><b>Thanks for playing! This preview ends here – the full game will follow.</b></p>
+<p>Alien Breed II: The Horror Continues (Team17, 1993) rebuilt for the browser from the game's own code: the 68000 code on your disks is
+   statically translated to C and WebAssembly with the AREK kit, and the Amiga chipset (bus slots, Copper, Blitter, bitplanes, sprites,
+   Paula) is a model checked against an emulator.</p>
+<p>Measured against the original: the picture matches 99.9 % of pixels, the sound registers 97–100 %, the game state follows the original
+   tick by tick. Enhanced draws a wider view from the level map and the game's own drawing, and moves smoothly at your display's rate.</p>
+<p>On the way we found two bugs in the original game: explosion debris can fly through a wall and off the map (the game then reads
+   memory outside the map – harmless on an Amiga), and the sound driver can mix up a sound number (a leftover high byte), which silences
+   a channel. Both are handled without changing how the original plays.</p>
+<p>The page contains no game data. The translated code and the start state are encrypted and only your own disks unlock them; the
+   disk images never leave your computer.</p>
+<p class="wbnote">Built with the <a href="https://pypi.org/project/amiga-re-kit/" target="_blank" rel="noopener">AREK kit</a>.</p>
+</section>
+</div>
+<input id="disk-file" type="file" accept=".adf" multiple hidden aria-label="Disks">
+</main>
+<script src="wb-menu.js"></script>
+<script src="wb-obraz.js"></script>
+<script src="wb-zvuk.js"></script>
+<script src="wb-nastaveni.js"></script>
+<script src="wb-seal.js"></script>
+<script src="arek-atn.js"></script>
+<script src="content.js"></script>
+<script src="pad.js"></script>
+<script src="wb-touch.js"></script>
+<script src="gl.js"></script>
+<script src="engine.js"></script>
+<script src="engine_mt.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

@@ -1,2 +1,0 @@
-{"about": "Superfrog disk 1: the bytes this rebuild reads (docs/PAYLOAD.md). Payload = for each range in this order: ASCII header 'd1:<offset>:<length>' + NUL, then the raw disk bytes [offset, offset+length).",
- "ranges": [[12288, 11716], [28672, 166984], [209920, 122880], [364032, 24064], [457728, 156160], [901116, 4]]}

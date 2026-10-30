@@ -1,13 +1,11 @@
 # arek play
 
-First levels of Amiga games, rebuilt with [amiga-re-kit](https://github.com/smikes75/amiga-re-kit)
-and playable in a browser **with your own disk image**.
+Amiga games rebuilt with [AREK](https://github.com/smikes75/amiga-re-kit) (amiga-re-kit)
+and playable in a browser **with your own disk images**.
 
 | game | play | needs |
 |---|---|---|
-| Superfrog (Team17, 1993), level 1 Magic Woods | [superfrog/](https://smikes75.github.io/arek-play/superfrog/) | disk 1 |
-| Alien Breed Special Edition 92 (Team17, 1992), level 1 | [alienbreed/](https://smikes75.github.io/arek-play/alienbreed/) | disks 1 and 2 |
-| Turrican II (Factor 5 / Rainbow Arts, 1991), world 1-1 | [turrican2/](https://smikes75.github.io/arek-play/turrican2/) | disk 1 |
+| Alien Breed II: The Horror Continues (Team17, 1993), intro, title and levels 1-2 | [alienbreed2/](https://smikes75.github.io/arek-play/alienbreed2/) | disks 1 and 2 |
 
 ## What is here, and what is not
 
@@ -24,5 +22,5 @@ and playable in a browser **with your own disk image**.
 Each folder is a self-contained bundle made by the game's own project and checked with
 `arek web check` (no game data, every derived file sealed, manifest matching the files).
 
-Original games © their rights holders. Amiga is a trademark of its owner. Questions and requests:
-open an issue.
+Original games © their rights holders. Amiga is a trademark of its owner. Feedback, bugs and wishes:
+[the AREK discussions on GitHub](https://github.com/smikes75/amiga-re-kit/discussions).
