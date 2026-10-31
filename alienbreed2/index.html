@@ -23,6 +23,7 @@
 #disks li{display:flex;justify-content:space-between;gap:10px;padding:1px 0}
 .disk-ok{color:#006a2a}.disk-bad{color:#a02000}
 #intro.dragover{outline:3px dashed var(--wb-orange)}
+#intro-progress{width:100%;max-width:360px;accent-color:var(--wb-blue)}
 #about{width:560px;text-align:left}
 #about p{margin:.6em 0}
 #arek-support{border-top:2px solid var(--wb-blue);margin-top:10px;padding:4px 14px 8px}
@@ -117,7 +118,9 @@
 <ul id="disks"></ul>
 <p><input id="files" type="file" accept=".adf" multiple hidden><button id="files-pick" type="button">Choose disk images…</button></p>
 <p><button id="intro-start" class="primary" type="button" disabled>Start game</button></p>
+<p><progress id="intro-progress" max="1" hidden></progress></p>
 <p id="intro-status" role="status"></p>
+<p class="wbnote">Fire (Ctrl / Z or a gamepad button) skips the intro; on the title screen fire starts the game. Without a key the game plays its intro and then its own demo.</p>
 <p class="wbnote">Arrows · Ctrl / Z = fire · M map · Space terminal · player 2: I J K L + right Shift · E Original / Enhanced · F full screen · P pause</p>
 </section>
 <div class="game" data-crt="strong" data-mode="original" hidden>
@@ -136,6 +139,7 @@
 <p>Measured against the original in an emulator (level 1, four 30-second runs with random joystick input): 99.9 % of the pixels match,
    the sound chip writes match in 97–100 % of the frames, and the game state matches tick by tick for the whole run in one of the
    four – in the others small CPU timing differences make the runs drift apart after 1–3 seconds. Enhanced draws a wider view from the level map and the game's own drawing, and moves smoothly at your display's rate.</p>
+<p>After Start the game boots as it did from floppies: its intro, title, hall of fame and credits take about 1½ minutes and end in a demo that plays itself. Fire (Ctrl / Z or a gamepad button) skips the intro; on the title screen fire starts the game, and level 1 is reached in about 25 seconds.</p>
 <p>On the way we found two bugs in the original game: explosion debris can fly through a wall and off the map (the game then reads
    memory outside the map – harmless on an Amiga), and the sound driver can mix up a sound number (a leftover high byte), which silences
    a channel. Both are handled without changing how the original plays.</p>

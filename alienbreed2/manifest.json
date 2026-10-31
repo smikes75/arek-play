@@ -1,6 +1,6 @@
 {
  "source": {
-  "commit": "1ba9cbab3244507111254e6ab9a30ee6f8a0648a",
+  "commit": "b810b248e1ca555a30c690ec5afacdebf4275939",
   "dirty": false
  },
  "files": [
@@ -48,14 +48,14 @@
   },
   {
    "path": "index.html",
-   "size": 10869,
-   "sha256": "fc28423654bf7c2d8ae656597442b27a381ac6a28a1b03a9c0dd274fdab68aff",
+   "size": 11485,
+   "sha256": "711eaf84b03d2df6883d0d13acc1e343baee26b05c97c222bad4543cfdaee7eb",
    "derived": false
   },
   {
    "path": "main.js",
-   "size": 88716,
-   "sha256": "3fb1927444a9b2389822253bc5a7915bcb243c94788319b312fabd6f543e95cc",
+   "size": 92727,
+   "sha256": "2cf67c675f07d9fdd2e1e4fd0b7ac978575f176b4c507332a4406b842f64d473",
    "derived": false
   },
   {
@@ -67,25 +67,25 @@
   {
    "path": "sealed/engine.wasm.sealed",
    "size": 1143245,
-   "sha256": "c67b5430e64a3a80d5a8eab5c8c7f89e44decf77728afd17251c3413a1dcb9c9",
+   "sha256": "ab3e30c962dc3f76e77e9dfa82fff4a75da2508f6091b99baee81ed83137a607",
    "derived": true
   },
   {
    "path": "sealed/engine_mt.wasm.sealed",
    "size": 463040,
-   "sha256": "87252f28db890e310ae3b61fe78b863531d9c90210988bbc80caceae829a11f9",
+   "sha256": "79512a94ba18f9d81ec099faa1f3f734bead89c67aa513fde9331f1d17e1a4ea",
    "derived": true
   },
   {
    "path": "sealed/seal.json",
    "size": 1283,
-   "sha256": "7c32095c2ab81e668ed6ac8a0bb2882071f4e9fa6686d2c77da5c75ab893c749",
+   "sha256": "b624cd35c136e624b20e0cfc5f79f4fd462783aa25a1814a972a19ac3db71bf8",
    "derived": false
   },
   {
    "path": "sealed/state.bin.sealed",
    "size": 306448,
-   "sha256": "a8e86ae6b9fc087d888a013ec5ad955241b4fcbec0cf5a26ab8c411c35e0576e",
+   "sha256": "baff46f5503e3338a007a906da71e74e7f1005797a14f50d9f0a930a224754e8",
    "derived": true
   },
   {
@@ -96,8 +96,8 @@
   },
   {
    "path": "shots/about.png",
-   "size": 125315,
-   "sha256": "9e04d42fd678afc9c059452b4a50433baa6e0a7f5cd3a096af16c96cddb14282",
+   "size": 151954,
+   "sha256": "e4d5e8f416379765defed11c6d9d607b5d7c81ebdb852dfc8942484839e17e30",
    "derived": false
   },
   {

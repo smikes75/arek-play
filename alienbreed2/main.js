@@ -551,24 +551,64 @@
     try {
       startAudio();
       setStatus('Opening the game…');
+      $('intro-start').disabled = $('start').disabled = true;   // druhý klik během stahování nespustí hru podruhé
+      startStep('Checking the disks…');
       const box = await openSeal([byNo(0), byNo(1)].filter(Boolean).map((d) => d.buf));
-      stateBytes = new Uint8Array(await box.fetch('state.bin', 'sealed/'));
-      posKey = (await sha(byNo(0).buf)).slice(0, 16); levelMenu();
       MT = !!(window.crossOriginIsolated && typeof SharedArrayBuffer === 'function' && window.ABR2EngineMT && !/[?&]mt=0\b/.test(location.search));
-      let wb = null; if (MT) { try { wb = await box.fetch('engine_mt.wasm', 'sealed/'); } catch (e) { MT = false; log('thread engine not in the package: ' + e.message); } }
-      wasmMod = await WebAssembly.compile(wb || await box.fetch('engine.wasm', 'sealed/'));
+      const man = await getManifest(), stored = (p) => ((man.files.find((f) => f.path === p) || {}).stored || 0);
+      const dl = { n: 0, total: stored('state.bin') + stored(MT ? 'engine_mt.wasm' : 'engine.wasm') };
+      stateBytes = new Uint8Array(await fetchSealed(box, 'state.bin', dl));
+      posKey = (await sha(byNo(0).buf)).slice(0, 16); levelMenu();
+      let wb = null; if (MT) { try { wb = await fetchSealed(box, 'engine_mt.wasm', dl); } catch (e) { if (!/HTTP 404/.test(e.message)) throw e; MT = false; log('thread engine not in the package: ' + e.message); } }   // jen chybějící soubor -> korutina; chyba sítě do okna
+      if (!wb) wb = await fetchSealed(box, 'engine.wasm', dl);
+      startStep('Preparing the engine…', 1); wasmMod = await WebAssembly.compile(wb);
       // kamera a sprity pozadu za hrou: vlákno dává snímky pravidelně -> 20 ms stačí (měřeno: 0 % chybějících mezipoloh, prodleva
       // kláves medián 59–62 ms proti 72–76 ms s 30 ms; 15 ms už 3,5 % chybí); korutina dává snímky nárazově v rAF -> 30 ms. ?latc=N ladění
       PACE.LATC = +((/[?&]latc=(\d+)/.exec(location.search) || [])[1] || (MT ? 20 : 30));
       PACE.LATO = PACE.latO = +((/[?&]lato=(\d+)/.exec(location.search) || [])[1] || 40);   // objekty za hrou: 40 ms (zadavatel: prodleva střelby; měřeno 60/40/30/20 ms: dopočet dopředu 0/0/16/41 %, nerovnoměrnost 0,91/0,73/0,84/0,84 px), ?lato= ladění
       log(MT ? 'engine in its own thread (shared memory), audio buffer ' + AUD.mt.target + ' ms, camera ' + PACE.LATC + ' ms behind the game' : 'engine in the main thread (coroutine, page without COOP/COEP)');
       await reset();
-      intro.hidden = true; game.hidden = false; layout(); screen.focus({ preventScroll: true });
+      startStep(null); intro.hidden = true; game.hidden = false; layout(); screen.focus({ preventScroll: true });
       running = true; requestAnimationFrame(loop);
       setStatus('Playing'); log('seal opened (' + (box.key.disks ? 'disks' : 'game content') + '), whole game from boot' + (byNo(2) ? '' : ' (without disk 3)'));
       log('keys: M map, Space Intex terminal, Ctrl / Z fire, N finish level (debug)');
-    } catch (e) { setStatus(String(e.message || e)); $('intro-status').textContent = String(e.message || e); }
+    } catch (e) { startStep(null); $('intro-start').disabled = $('start').disabled = false; setStatus(String(e.message || e)); $('intro-status').textContent = String(e.message || e); }
   }
+  // průběh po Startu (M34, publikace): ověření disket, stažení zapečetěných souborů po bajtech, překlad wasm; null = skrýt.
+  // Změřeno na arek-play (2026-10-31): stažení a odemčení 1,45 MB + překlad 0,45–1,5 s; na pomalém připojení déle
+  function startStep(text, frac) {
+    const bar = $('intro-progress'); if (!bar) return;
+    bar.hidden = text === null; if (text === null) return;
+    if (frac === undefined) bar.removeAttribute('value'); else bar.value = frac;
+    $('intro-status').textContent = text;                // lišta jen „Opening the game…“ (měnící se text v liště měnil rozvržení plochy)
+  }
+  async function fetchSealed(box, path, dl) {             // jako box.fetch, ale s průběhem stahování (dl = { n, total } bajtů)
+    // chyba sítě i zaseknuté stahování (20 s bez bajtu) skončí hláškou v okně Startu a Start jde zmáčknout znovu (ne tiché čekání)
+    const ac = new AbortController(); let idle = null; const arm = () => { clearTimeout(idle); idle = setTimeout(() => ac.abort(), 20000); };
+    const fail = (why) => new Error('Downloading the game failed (' + why + ') – check the connection and press Start game again.');
+    arm(); let r;
+    try { r = await fetch('sealed/' + path + '.sealed', { signal: ac.signal }); } catch (e) { clearTimeout(idle); throw fail(ac.signal.aborted ? 'no data for 20 s' : e.message || 'network error'); }
+    if (!r.ok) { clearTimeout(idle); throw fail(path + ': HTTP ' + r.status); }
+    const mb = (x) => (x / 1048576).toFixed(1), show = () => startStep('Downloading the game: ' + mb(dl.n) + (dl.total ? ' / ' + mb(dl.total) : '') + ' MB', dl.total ? Math.min(1, dl.n / dl.total) : undefined);
+    let buf;
+    if (r.body && r.body.getReader) {
+      const rd = r.body.getReader(), parts = []; let n = 0;
+      try { for (;;) { const { done, value } = await rd.read(); if (done) break; arm(); parts.push(value); n += value.length; dl.n += value.length; show(); } }
+      catch (e) { throw fail(ac.signal.aborted ? 'no data for 20 s' : e.message || 'connection lost'); } finally { clearTimeout(idle); }
+      buf = new Uint8Array(n); let o = 0; for (const q of parts) { buf.set(q, o); o += q.length; }
+    } else { try { buf = new Uint8Array(await r.arrayBuffer()); } catch (e) { throw fail(e.message || 'connection lost'); } finally { clearTimeout(idle); } dl.n += buf.length; show(); }
+    startStep('Unlocking the game…', dl.total ? Math.min(1, dl.n / dl.total) : undefined);
+    return box.get(path, buf);
+  }
+  // skrytá karta (M34): rAF stojí a další snímek stránky po skrytí nemusí přijít -> pojistku zvuku vlákna vypnout hned, jinak hra
+  // ve vlákně běží dál podle zvuku (změřeno: emulace skryté karty bez dalšího rAF, 10 s: +499 snímků, zvuk hraje); po návratu
+  // zpět, hodiny začnou od prvního snímku displeje (bez dohánění)
+  document.addEventListener('visibilitychange', () => {
+    if (!M || !MT || !running) return;
+    const paused = manualPause || menuPause || document.hidden;
+    if (paused !== PACE.pausedAud) { PACE.pausedAud = paused; if (M._engine_aud_low) M._engine_aud_low(paused ? 0 : Math.round(AUD.mt.low * 48)); }
+    if (document.hidden) setStatus('Paused – tab hidden');
+  });
   $('intro-start').onclick = start; $('start').onclick = start;
   // nová instance enginu (běžící korutinu nejde přerušit; zkompilovaný modul se použije znovu, je to rychlé)
   async function reset(from) {                              // from = uložená pozice (začátek levelu), jinak start z disket
@@ -919,7 +959,7 @@
     if (urlDisks.length) {
       const got = [];
       for (const u of urlDisks) {
-        const url = new URL(u, location.href);
+        const url = new URL(u, document.baseURI);   // proti <base>, jako ostatní relativní cesty stránky (mikdenik: adresa bez koncového lomítka)
         if (url.origin !== location.origin) { log(u + ': only disks from the same origin'); continue; }
         try { const r = await fetch(url); if (!r.ok) throw new Error(r.status); got.push({ name: decodeURIComponent(url.pathname.split('/').pop()), buf: await r.arrayBuffer() }); }
         catch (e) { log(u + ': cannot load (' + e.message + ')'); }
