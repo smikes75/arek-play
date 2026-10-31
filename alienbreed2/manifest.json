@@ -1,6 +1,6 @@
 {
  "source": {
-  "commit": "9e58c9945b3e55b20f99fe11cfb16956cb06a70e",
+  "commit": "1ba9cbab3244507111254e6ab9a30ee6f8a0648a",
   "dirty": false
  },
  "files": [
@@ -30,14 +30,14 @@
   },
   {
    "path": "engine.js",
-   "size": 77195,
-   "sha256": "76b9b740c3f5522d32b97dd23a52e15b0c8a2874570dbe4899ccfa6a32caba7f",
+   "size": 77627,
+   "sha256": "a8613d9ca3468f469fbe259b235b826f8e156b9840f8e075ea2ba699bb461f8b",
    "derived": false
   },
   {
    "path": "engine_mt.js",
-   "size": 83433,
-   "sha256": "e05dc61d65cf54e636717169aa6eb614837502200b78bb182dbc9dcb4420999e",
+   "size": 83865,
+   "sha256": "6a1dac5543f14a3e3a27b516e7d50be856f1aa6134b56b9aecb60410b4fa2505",
    "derived": false
   },
   {
@@ -48,14 +48,14 @@
   },
   {
    "path": "index.html",
-   "size": 10479,
-   "sha256": "ceec02a6907a9c6755048527c8322f1cdeb60241bc2a891a72e2d6ce22f91a33",
+   "size": 10869,
+   "sha256": "fc28423654bf7c2d8ae656597442b27a381ac6a28a1b03a9c0dd274fdab68aff",
    "derived": false
   },
   {
    "path": "main.js",
-   "size": 87258,
-   "sha256": "1f0dd211efe0b990745e5fa59f97ce193365fd6468429ec6c358702ab1a34042",
+   "size": 88716,
+   "sha256": "3fb1927444a9b2389822253bc5a7915bcb243c94788319b312fabd6f543e95cc",
    "derived": false
   },
   {
@@ -66,26 +66,26 @@
   },
   {
    "path": "sealed/engine.wasm.sealed",
-   "size": 1137967,
-   "sha256": "61dcd16606d7a1092e3b8dd5f95e0782d2b316550945b9d765d559e94e8389e8",
+   "size": 1143245,
+   "sha256": "c67b5430e64a3a80d5a8eab5c8c7f89e44decf77728afd17251c3413a1dcb9c9",
    "derived": true
   },
   {
    "path": "sealed/engine_mt.wasm.sealed",
-   "size": 456254,
-   "sha256": "186bcb9b96bb2b1b465c8d522ec73cffb04c536066f40ab221e07ddc7c97cab8",
+   "size": 463040,
+   "sha256": "87252f28db890e310ae3b61fe78b863531d9c90210988bbc80caceae829a11f9",
    "derived": true
   },
   {
    "path": "sealed/seal.json",
    "size": 1283,
-   "sha256": "207fb6774f59a340f9103d0f87e8cc5fb043350a52d9c5d86a8d952316f452f1",
+   "sha256": "7c32095c2ab81e668ed6ac8a0bb2882071f4e9fa6686d2c77da5c75ab893c749",
    "derived": false
   },
   {
    "path": "sealed/state.bin.sealed",
    "size": 306448,
-   "sha256": "6c92240fbfb7a74c103f99704236cf8e15297887bbed9f4eeda072b4037c602a",
+   "sha256": "a8e86ae6b9fc087d888a013ec5ad955241b4fcbec0cf5a26ab8c411c35e0576e",
    "derived": true
   },
   {
@@ -96,8 +96,8 @@
   },
   {
    "path": "shots/about.png",
-   "size": 108695,
-   "sha256": "b5c4d9194ff857d5bf28d379ce47baef340b4b421a34051645ed0d3ddef0b332",
+   "size": 125315,
+   "sha256": "9e04d42fd678afc9c059452b4a50433baa6e0a7f5cd3a096af16c96cddb14282",
    "derived": false
   },
   {

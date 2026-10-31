@@ -59,7 +59,7 @@
     if (ts - g.t0 < 5000) return;
     g.bad = g.late > 0.05 * g.n ? g.bad + 1 : 0; const n = g.n, late = g.late; g.t0 = ts; g.n = g.late = 0;
     if (g.bad >= 2) { g.done = true; glv.want = false; const cb = $('gl-on'); if (cb) cb.checked = false;
-      log('WebGL vypnuto pojistkou: vypadávaly snímky (' + late + ' z ' + n + ' za 5 s), obraz skládá procesor'); }
+      log('WebGL off by the safeguard: frames were dropped (' + late + ' of ' + n + ' in 5 s), the CPU composes the picture'); }
   }
   const disp = { mode: 'original', S: 1, testFill: null, test: null, anim: null, label: '', lut: null, lutKey: '' };
   const dprNow = () => window.devicePixelRatio || 1;
@@ -311,7 +311,7 @@
   let firstVisit = false; try { firstVisit = !localStorage.getItem(MENU_STORE); } catch (e) {}   // před build: kit stav hned ukládá
   var menu = WBNASTAVENI.build(document.createElement('div'), {
     store: MENU_STORE, lang: 'en', zoom: 'snap', zoomSteps,
-    defaults: { sound: { original: { stereo: 100 }, enhanced: { stereo: 70 } }, display: { original: { smooth: true, zoom: 0, blur: 0 }, enhanced: { smooth: true, zoom: 0, blur: 0 } } },   // zoom do okna, rozmazání 0 (zadavatel)
+    defaults: { sound: { original: { stereo: 100 }, enhanced: { stereo: 70 } }, display: { original: { smooth: true, zoom: 2, blur: 0 }, enhanced: { smooth: true, zoom: 0, blur: 0 } } },   // Original 2×, Enhanced do okna, rozmazání 0 (zadavatel)
     texts: { display: { crt: 'CRT scanlines and RGB mask', 'crt-detail': 'CRT detail', smooth: 'Smooth motion' } },
   });
   // Plynulé zobrazení výchozí ve všech režimech (zadání); uložené nastavení z dřívějška se jednou přepne
@@ -364,8 +364,10 @@
   function sndPlusSync() {
     const on = !!sndPlus[disp.mode], cb = $('snd-plus'); if (cb) cb.checked = on;
     if (M && M._engine_sound_redirect) M._engine_sound_redirect(on ? 1 : 0);
+    if (M && M._engine_sound_hum) M._engine_sound_hum(on ? 1 : 0);   // hučení reaktorů podle vzdálenosti a ve stereu (M33)
+    const ht = /[?&]hum=([\d.]+),([\d.]+),([\d.]+)(?:,([\d.]+))?/.exec(location.search);   //@DEV ladění: plná do px, ticho od px, zbytek, nejvíc
   }
-  { const cb = $('snd-plus'); if (cb) cb.onchange = () => { sndPlus[disp.mode] = cb.checked; try { localStorage.setItem('abii-snd-plus', JSON.stringify(sndPlus)); } catch (e) {} sndPlusSync(); log('vylepšený zvuk (' + (disp.mode === 'enhanced' ? 'Vylepšeno' : 'Originál') + '): ' + (cb.checked ? 'zapnuto' : 'vypnuto')); }; }
+  { const cb = $('snd-plus'); if (cb) cb.onchange = () => { sndPlus[disp.mode] = cb.checked; try { localStorage.setItem('abii-snd-plus', JSON.stringify(sndPlus)); } catch (e) {} sndPlusSync(); log('enhanced sound (' + disp.mode + '): ' + (cb.checked ? 'on' : 'off')); }; }
   sndPlusSync();
   const toSound = (z) => ({ on: z.sound, volume: z.volume, stereo: z.stereo, filterFixed: z['filter-fixed'], filterLed: z['filter-led'], filterHp: z['filter-hp'] });
   const ledOn = () => (M ? M._engine_led() !== 0 : false);   // 1 = LED svítí = filtr zapnutý; -1 (hra nezapsala) = jako po Kickstartu
@@ -459,25 +461,35 @@
   // ---------------------------------------------------------------- diskety a pečeť
   let disks = [];                                          // [{name, buf}]
   const DISK_ID = { '00123111': 0, '4d104d43': 1, 'b7aab7dd': 2 };   // long v sektoru 0 na +8 (docs/disk.md bod 5)
-  const diskNo = (buf) => (buf.byteLength >= 12 ? DISK_ID[hex(buf.slice(8, 12))] : undefined);
+  const diskNo = (buf) => (buf.byteLength === 901120 ? DISK_ID[hex(buf.slice(8, 12))] : undefined);   // jen celý obraz ADF (zkrácený s platným sektorem 0 ne)
   const byNo = (k) => disks.find((d) => diskNo(d.buf) === k);
   let manifest = null;
   const hex = (b) => Array.from(new Uint8Array(b), (x) => x.toString(16).padStart(2, '0')).join('');
   async function sha(buf) { return hex(await crypto.subtle.digest('SHA-256', buf)); }
   async function getManifest() { if (!manifest) manifest = await (await fetch('sealed/seal.json')).json(); return manifest; }
   async function showDisks() {
+    let agaSeen = false;
     const ul = $('disks'); ul.replaceChildren();
     const m = await getManifest().catch(() => null), known = m ? m.keys.filter((k) => k.disks).map((k) => k.disks).flat() : [];
     for (const d of disks) {
       const h = await sha(d.buf), li = document.createElement('li'), i = known.indexOf(h);
       li.innerHTML = '<span></span><span></span>'; li.children[0].textContent = d.name;
-      const d3 = i < 0 && diskNo(d.buf) === 2;                // disk 3 pečeť nezná (stačí disky 1 a 2): identita v sektoru 0
-      li.children[1].textContent = i >= 0 ? 'disk ' + (i % 2 + 1) + ' ✓' : d3 ? 'disk 3 ✓' : (d.buf.byteLength === 901120 ? 'other version (checked by content)' : 'not an ADF');
-      li.children[1].className = i >= 0 || d3 ? 'disk-ok' : 'disk-bad'; ul.appendChild(li);
+      // proč disk nesedí (M33): otisk v pečeti, velikost ADF, identita v sektoru 0 (+8: disk 1 $00123111, 2 $4D104D43, 3 $B7AAB7DD;
+      // AGA disk 1 $00123000, AGA disky 2–4 začínají „ATN!“ – změřeno na archivu FLT)
+      const n = diskNo(d.buf), head = d.buf.byteLength >= 12 ? hex(d.buf.slice(8, 12)) : '', aga = head === '00123000' || (d.buf.byteLength >= 4 && hex(d.buf.slice(0, 4)) === '41544e21');
+      const okd = i >= 0 || n !== undefined && d.buf.byteLength === 901120; if (aga) agaSeen = true;
+      li.children[1].textContent = i >= 0 ? 'disk ' + (i % 2 + 1) + ' ✓'
+        : d.buf.byteLength !== 901120 ? 'not a disk image: ' + d.buf.byteLength + ' bytes, an Amiga ADF has 901 120'
+        : n === 2 ? 'disk 3 ✓'
+        : n !== undefined ? 'disk ' + (n + 1) + ', other release – checked when the game starts'
+        : aga ? 'AGA (A1200) version – not supported'
+        : 'not an Alien Breed II disk (another game, or the boot sector is damaged)';
+      li.children[1].className = okd ? 'disk-ok' : 'disk-bad'; ul.appendChild(li);
     }
-    const ok = !!byNo(0) && !!byNo(1);
+    const ok = !!byNo(0) && !!byNo(1), miss = [0, 1].filter((k) => !byNo(k)).map((k) => 'disk ' + (k + 1));
     $('intro-start').disabled = !ok; $('start').disabled = !ok;
-    $('intro-status').textContent = ok ? '' : disks.length >= 2 ? 'These disks are not recognized – the rebuild needs the Amiga 500 version of Alien Breed II (disks 1 and 2), not the AGA (A1200) version.' : 'Disks 1 and 2 are needed.';
+    $('intro-status').textContent = ok ? '' : agaSeen ? 'This is the AGA (A1200) version of Alien Breed II – the rebuild needs the Amiga 500 version (disks 1 and 2).'
+      : !disks.length ? '' : (miss.length > 1 ? 'Disks 1 and 2 are' : 'Disk ' + miss[0].slice(5) + ' is') + ' missing' + (disks.length > (2 - miss.length) ? ' – see why next to each file above.' : '.');
   }
   async function addFiles(files) {
     for (const f of files) { const buf = await f.arrayBuffer(); if (!disks.some((d) => d.name === f.name)) disks.push({ name: f.name, buf }); }
@@ -491,6 +503,7 @@
   async function loadDisks() { try { const db = await idb(); return await new Promise((res) => { const q = db.transaction('adf').objectStore('adf').get('set'); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); }); } catch (e) { return []; } }
   $('forget').onclick = async () => { try { const db = await idb(); db.transaction('adf', 'readwrite').objectStore('adf').delete('set'); } catch (e) {} shell.message('Saved disks forgotten'); };
   $('files').onchange = (e) => addFiles(e.target.files);
+  $('files-pick').onclick = () => $('files').click();   // vlastní tlačítko: popisek prohlížeče („Soubor nevybrán“) je v jazyce systému
   $('disk-file').onchange = (e) => addFiles(e.target.files);
   $('disks-insert').onclick = () => $('disk-file').click();
   const intro = $('intro');
@@ -503,7 +516,7 @@
     setStatus('Other disk version: looking for the game files…');
     const content = await gameContent(bufs, await (await fetch('content.json')).json());
     if (content) { try { return await WBSEAL.openPayload(m, content); } catch (e) { /* obsah nesedí */ } }
-    throw new Error('these disks do not fit (Alien Breed II, A500/ECS version, disks 1 and 2 are needed)');
+    throw new Error('The game files on these disks could not be verified – a disk image is probably damaged or modified. Needed: Alien Breed II, Amiga 500 version, disks 1 and 2.');
   }
 
   // ---------------------------------------------------------------- hra: přeložený engine, takt podle zvukových hodin (49,92 Hz)
@@ -518,13 +531,13 @@
   // 25 Hz) o LATO –, takže pro mezipolohu je vždy k dispozici další snímek i příští průchod. Zvuk jde zvlášť (audio-worklet.js).
   // Snímek hry bez povolení (hra v rušné scéně udělá 3–4 snímky v jednom běhu, než dojde k čekací smyčce) nemá v tg svůj čas
   // (tgN ≠ n) – dřív dostal starý čas z kruhu (o 256 snímků = 5 s), teď předchozí + 1 snímek hry; hodiny pak čekají za ním.
-  const PACE = { clock: 0, granted: 0, tg: new Float64Array(256), tgN: new Int32Array(256).fill(-1), lastT: 0, AHEAD: 2, LATC: 30, LATO: 60, latO: 60, lens: [], lastPassT: -1, maxPass: -1, pausedAud: false };
+  const PACE = { clock: 0, granted: 0, tg: new Float64Array(256), tgN: new Int32Array(256).fill(-1), lastT: 0, AHEAD: 2, LATC: 30, LATO: 40, latO: 40, lens: [], lastPassT: -1, maxPass: -1, pausedAud: false };
   // objekty pozadu přizpůsobivě (jako zásobník proti kolísání): v rušných scénách hra kreslí objekty jen každý 3.–4. snímek
   // (60–80 ms, změřeno: level 1, průchody 134 → 136 … po 0,0801 s) a se 60 ms by na začátku průchodu chyběl příští průchod
   // (objekt stojí a pak poskočí). Cíl = nejdelší z posledních 16 průchodů − kolik má hra spočítáno dopředu + 8 ms, 60–120 ms;
   // nahoru až 1 ms, dolů 0,1 ms na snímek displeje (změna tempa objektů nejvýš ~6 %, ne skok).
   function latOStep(ts) {
-    if (M && M._engine_view_extrap) return (PACE.latO = PACE.LATO);   // engine dopočítá polohu dopředu: objekty pevně 60 ms (blízko hráči, 30 ms)
+    if (M && M._engine_view_extrap) return (PACE.latO = PACE.LATO);   // engine dopočítá polohu dopředu: objekty pevně LATO (40 ms)
     const newest = frames.length ? frames[frames.length - 1].t * 1000 : ts, maxLen = PACE.lens.length ? Math.max(...PACE.lens) : 40;
     const target = Math.min(120, Math.max(PACE.LATO, maxLen - (newest - ts) + 8)), d = target - PACE.latO;
     PACE.latO += d > 0 ? Math.min(1, d) : Math.max(-0.1, d);
@@ -542,17 +555,18 @@
       stateBytes = new Uint8Array(await box.fetch('state.bin', 'sealed/'));
       posKey = (await sha(byNo(0).buf)).slice(0, 16); levelMenu();
       MT = !!(window.crossOriginIsolated && typeof SharedArrayBuffer === 'function' && window.ABR2EngineMT && !/[?&]mt=0\b/.test(location.search));
-      let wb = null; if (MT) { try { wb = await box.fetch('engine_mt.wasm', 'sealed/'); } catch (e) { MT = false; log('engine ve vlákně není v balíku: ' + e.message); } }
+      let wb = null; if (MT) { try { wb = await box.fetch('engine_mt.wasm', 'sealed/'); } catch (e) { MT = false; log('thread engine not in the package: ' + e.message); } }
       wasmMod = await WebAssembly.compile(wb || await box.fetch('engine.wasm', 'sealed/'));
       // kamera a sprity pozadu za hrou: vlákno dává snímky pravidelně -> 20 ms stačí (měřeno: 0 % chybějících mezipoloh, prodleva
       // kláves medián 59–62 ms proti 72–76 ms s 30 ms; 15 ms už 3,5 % chybí); korutina dává snímky nárazově v rAF -> 30 ms. ?latc=N ladění
       PACE.LATC = +((/[?&]latc=(\d+)/.exec(location.search) || [])[1] || (MT ? 20 : 30));
-      log(MT ? 'engine ve vlastním vlákně (sdílená paměť), zásoba zvuku ' + AUD.mt.target + ' ms, kamera ' + PACE.LATC + ' ms za hrou' : 'engine v hlavním vlákně (korutina, stránka bez COOP/COEP)');
+      PACE.LATO = PACE.latO = +((/[?&]lato=(\d+)/.exec(location.search) || [])[1] || 40);   // objekty za hrou: 40 ms (zadavatel: prodleva střelby; měřeno 60/40/30/20 ms: dopočet dopředu 0/0/16/41 %, nerovnoměrnost 0,91/0,73/0,84/0,84 px), ?lato= ladění
+      log(MT ? 'engine in its own thread (shared memory), audio buffer ' + AUD.mt.target + ' ms, camera ' + PACE.LATC + ' ms behind the game' : 'engine in the main thread (coroutine, page without COOP/COEP)');
       await reset();
       intro.hidden = true; game.hidden = false; layout(); screen.focus({ preventScroll: true });
       running = true; requestAnimationFrame(loop);
-      setStatus('Playing'); log('pečeť otevřena (' + (box.key.disks ? 'diskety' : 'obsah hry') + '), celá hra od spuštění z disket' + (byNo(2) ? '' : ' (bez disku 3)'));
-      log('klávesy: M mapa, mezerník terminál Intex, Ctrl / Z fire, N dokončit level (ladění)');
+      setStatus('Playing'); log('seal opened (' + (box.key.disks ? 'disks' : 'game content') + '), whole game from boot' + (byNo(2) ? '' : ' (without disk 3)'));
+      log('keys: M map, Space Intex terminal, Ctrl / Z fire, N finish level (debug)');
     } catch (e) { setStatus(String(e.message || e)); $('intro-status').textContent = String(e.message || e); }
   }
   $('intro-start').onclick = start; $('start').onclick = start;
@@ -578,7 +592,7 @@
     actSync();
     for (let k = 0; k < 3; k++) { const d = byNo(k); if (!d) continue; const b = new Uint8Array(d.buf), q = M._engine_alloc(b.length); M.HEAPU8.set(b, q); M._engine_set_disk(k, q, b.length); allocs.push(q); }
     if (MT) { const r = M._engine_run(); if (r) throw new Error('engine_run ' + r); audioBind(); }
-    else M.ccall('engine_run', 'number', [], [], { async: true }).then((c) => log('engine_run skončil ' + c));
+    else M.ccall('engine_run', 'number', [], [], { async: true }).then((c) => log('engine_run ended ' + c));
     restarting = false;
   }
   let snapSeen = 0, allocs = [];
@@ -592,14 +606,14 @@
   const posReq = (q) => new Promise((res) => { q.onsuccess = () => res(q.result); q.onerror = () => res(null); });
   async function posAll() { try { const db = await posDb(); return ((await posReq(db.transaction('levels').objectStore('levels').getAll())) || []).filter((x) => x.disk === posKey); } catch (e) { return []; } }
   async function posPut(id, bytes) {
-    try { const db = await posDb(); await posReq(db.transaction('levels', 'readwrite').objectStore('levels').put({ id, disk: posKey, t: Date.now(), bytes }, posKey + ':' + id)); } catch (e) { log('pozici nejde uložit: ' + (e.message || e)); }
+    try { const db = await posDb(); await posReq(db.transaction('levels', 'readwrite').objectStore('levels').put({ id, disk: posKey, t: Date.now(), bytes }, posKey + ':' + id)); } catch (e) { log('cannot save the position: ' + (e.message || e)); }
     levelMenu();
   }
   function pollSnap() {
     if (!M._engine_snap_seq || !posKey) return;
     const q = M._engine_snap_seq(); if (q === snapSeen) return; snapSeen = q;
     const id = M._engine_snap_level(), n = M._engine_snap_len(), p = M._engine_snap();
-    posPut(id, M.HEAPU8.slice(p, p + n)); log('pozice uložena: začátek levelu ' + levelNo(id));
+    posPut(id, M.HEAPU8.slice(p, p + n)); log('position saved: start of level ' + levelNo(id));
   }
   async function levelMenu() {
     const box = $('levels'); if (!box) return;
@@ -608,7 +622,7 @@
       b.textContent = 'Level ' + levelNo(x.id); b.onclick = () => { startFrom(x.bytes, levelNo(x.id)); }; return b; }));
     $('levels-note').textContent = all.length ? 'The start of each level you reached (saved in this browser).' : 'None yet: the start of every level you reach is saved here.';
   }
-  function startFrom(bytes, n) { if (!M) return; reset(bytes).then(() => { log('pokračuji od levelu ' + n); if (levelDone || !running) { levelDone = false; running = true; requestAnimationFrame(loop); } }); }
+  function startFrom(bytes, n) { if (!M) return; reset(bytes).then(() => { log('continuing from level ' + n); if (levelDone || !running) { levelDone = false; running = true; requestAnimationFrame(loop); } }); }
   { const panel = $('game-panel'), hr = panel.querySelector('hr'), h = document.createElement('div');
     h.innerHTML = '<p class="wbnote"><b>Continue from level</b></p><div id="levels"></div><p id="levels-note" class="wbnote"></p><hr>';
     panel.insertBefore(h, hr ? hr.nextSibling : null); }
@@ -624,9 +638,9 @@
     wd.fired = true; const pc0 = M._engine_dbg_pc(), n0 = M._engine_dbg_pcn(), w = M._engine_waiting(), f = M._engine_dbg_frame();
     setTimeout(() => {
       const pc1 = M._engine_dbg_pc(), dn = (M._engine_dbg_pcn() - n0) >>> 0, hx = (v) => '$' + (v >>> 0).toString(16).padStart(6, '0');
-      const st = w ? 'čeká na povolení' : dn ? 'běží v kódu hry (' + dn + ' kroků za 0,5 s, adresa ' + hx(pc0) + ' → ' + hx(pc1) + ')' : 'stojí (žádný krok za 0,5 s, adresa ' + hx(pc1) + ')';
+      const st = w ? 'waiting for permission' : dn ? 'running game code (' + dn + ' steps in 0.5 s, address ' + hx(pc0) + ' → ' + hx(pc1) + ')' : 'stuck (no step in 0.5 s, address ' + hx(pc1) + ')';
       const a = M._engine_as_n ? M._engine_as_frame(0) : -1;
-      log('hra se zastavila: snímek ' + f + ', level ' + levelNo(level) + ', vlákno ' + st + (a >= 0 ? ', poslední záloha ze snímku ' + a : '') + ' (Ladění → Zaseknutí)');
+      log('game stopped: frame ' + f + ', level ' + levelNo(level) + ', thread ' + st + (a >= 0 ? ', last backup from frame ' + a : '') + ' (Debug → Stall)');
       $('stall-text').textContent = 'The game has stopped. ' + (a >= 0 ? 'The last save point is ' + ((f - a) / 50).toFixed(0) + ' s old.' : '');
       $('stall').hidden = false;
     }, 500);
@@ -635,7 +649,7 @@
     bar.innerHTML = '<span id="stall-text"></span> <button type="button" id="stall-go">Resume from save point</button> <button type="button" id="stall-dl">Download save for debugging</button>';
     game.appendChild(bar);
     $('stall-go').onclick = () => { if (!M || !M._engine_as_len || !M._engine_as_len(0)) return; const p = M._engine_as_buf(0), b = M.HEAPU8.slice(p, p + M._engine_as_len(0));
-      $('stall').hidden = true; wd.fired = false; log('pokračuji od zálohy ze snímku ' + M._engine_as_frame(0)); startFrom(b, 'zálohy'); };
+      $('stall').hidden = true; wd.fired = false; log('continuing from the backup of frame ' + M._engine_as_frame(0)); startFrom(b, 'backup'); };
     $('stall-dl').onclick = () => { const b = $('dbg-as0'); if (b) b.click(); };
     if (!$('diagnostics')) $('stall-dl').hidden = true;   // publikace: bez stažení zálohy pro ladění
   }
@@ -670,7 +684,7 @@
     pump();
     if (frames.length) { hist.push(frames[frames.length - 1]); frames = []; if (hist.length > 4) hist.splice(0, hist.length - 4); present(true, hist[hist.length - 1].t); }
     M._engine_allow(M._engine_done() + 24); if (M._engine_waiting() && M.__engineResume) M.__engineResume();   // kruh záznamů enginu má 32 snímků
-    setStatus('Skok na level ' + levelNo(jumpTo) + ' · teď level ' + levelNo(level));
+    setStatus('Jumping to level ' + levelNo(jumpTo) + ' · now level ' + levelNo(level));
     return true;
   }
   // Ladění → Výhled Vylepšeno: rozšíření z mapy levelu (engine nejvýš ±96 × ±48), výchozí 522 × 357; uložené v prohlížeči
@@ -707,9 +721,9 @@
   function monShow() {
     if (!$('mon-out')) return;                             // publikace: panel Ladění není
     const n = Math.min(10, monHist.length), h = monHist.slice(-n), a = (k) => h.reduce((x, r) => x + r[k], 0) / Math.max(1, n);
-    $('mon-out').textContent = !n ? 'zatím nic: měří se jen při hře (ne v pauze ani s otevřeným menu)' :
-      'poslední sekunda hry:\n' + monText(monHist[monHist.length - 1]) + '\n\nprůměr za ' + n + ' s hry: vypadlo ' + h.reduce((x, r) => x + r.drops, 0) +
-      ' snímků, obraz pozadu za hrou: kamera ' + fmt(a('latC'), 0) + ' ms, objekty ' + fmt(a('latO'), 0) + ' ms, zásoba zvuku ' + fmt(a('lead'), 0) + ' ms, výpadků zvuku ' + h.reduce((x, r) => x + r.under, 0) + ', hra ' + fmt(a('game'), 2) + ' ms na snímek, skládání ' + fmt(a('view'), 2) + ' ms, plátno ' + fmt(a('paint'), 2) + ' ms, smyčka ' + fmt(a('loop'), 2) + ' ms';
+    $('mon-out').textContent = !n ? 'nothing yet: measured only while playing (not paused, no menu open)' :
+      'last second of play:\n' + monText(monHist[monHist.length - 1]) + '\n\naverage over ' + n + ' s of play: dropped ' + h.reduce((x, r) => x + r.drops, 0) +
+      ' frames, picture behind the game: camera ' + fmt(a('latC'), 0) + ' ms, objects ' + fmt(a('latO'), 0) + ' ms, audio buffer ' + fmt(a('lead'), 0) + ' ms, audio underruns ' + h.reduce((x, r) => x + r.under, 0) + ', game ' + fmt(a('game'), 2) + ' ms per frame, compose ' + fmt(a('view'), 2) + ' ms, canvas ' + fmt(a('paint'), 2) + ' ms, loop ' + fmt(a('loop'), 2) + ' ms';
   }
   // hlídání výkonu (zadavatel: „zpomalování asi vzniká v Chromu“): prohlížeč 2 s kreslí méně než 3/4 dosud nejvyššího počtu
   // snímků (úspora energie, baterie), nebo hra 3 s dodá méně než 45 snímků/s -> protokol a poznámka ve hře na 8 s (každý druh
@@ -722,36 +736,36 @@
     pw.lowG = r.gf > 0 && r.gf < 45 ? pw.lowG + 1 : 0;
     if (now - pw.t0 < 5000) return;
     const say = (k, t, hint) => {
-      if (pw.said[k] && now - pw.said[k] < 60000) return; pw.said[k] = now; log('výkon: ' + t);
+      if (pw.said[k] && now - pw.said[k] < 60000) return; pw.said[k] = now; log('performance: ' + t);
       if (navigator.webdriver) return; const el = $('perf-hint'); el.textContent = hint; el.hidden = false; clearTimeout(pw.h); pw.h = setTimeout(() => { el.hidden = true; }, 8000);
     };
-    if (pw.lowD >= 2) say('disp', 'prohlížeč kreslí jen ' + r.fps + ' snímků/s (dosud ' + pw.best + ') – omezuje ho prohlížeč nebo systém (úspora energie, baterie)',
+    if (pw.lowD >= 2) say('disp', 'browser draws only ' + r.fps + ' frames/s (best ' + pw.best + ') – limited by the browser or the system (energy saving, battery)',
       'The browser now draws only ' + r.fps + ' frames per second – probably energy saving (Chrome: Settings → Performance) or battery.');
     if (pw.lowG >= 3) {
-      const busy = r.game * r.gf / 10, how = r.game > 0 ? ', vlákno hry počítá ' + fmt(r.game, 2) + ' ms na snímek (' + fmt(busy, 0) + ' % času)' : '';
-      if (r.game > 0 && busy > 80) say('cpu', 'hra stihla jen ' + r.gf + ' snímků/s' + how + ' – počítač nestíhá nebo ho systém zpomaluje (úspora energie, teplota)',
+      const busy = r.game * r.gf / 10, how = r.game > 0 ? ', game thread computes ' + fmt(r.game, 2) + ' ms per frame (' + fmt(busy, 0) + ' % of the time)' : '';
+      if (r.game > 0 && busy > 80) say('cpu', 'game made only ' + r.gf + ' frames/s' + how + ' – the computer cannot keep up or is slowed down (energy saving, heat)',
         'The game cannot keep up (' + r.gf + ' frames per second instead of 50) – the computer is busy or slowed down (energy saving, battery, heat).');
-      else say('game', 'hra stihla jen ' + r.gf + ' snímků/s' + how + ' – hra čeká, brzdí ji prohlížeč (úspora energie, karta na pozadí, jiné karty)',
+      else say('game', 'game made only ' + r.gf + ' frames/s' + how + ' – the game waits, held back by the browser (energy saving, background tab, other tabs)',
         'The game runs slower (' + r.gf + ' frames per second instead of 50) – the browser holds it back, probably energy saving (Chrome: Settings → Performance).');
     }
   }
   { const el = document.createElement('div'); el.id = 'perf-hint'; el.hidden = true; el.className = 'stall perfhint'; game.appendChild(el); }
-  const monText = (r) => 'displej ' + fmt(r.hz) + ' Hz (' + fmt(r.budget) + ' ms na snímek) · snímků ' + r.fps + '/s · vypadlo ' + r.drops + ' (nejdelší ' + fmt(r.maxInt) + ' ms)\n' +
-    'hra ' + r.gf + ' snímků/s, ' + (r.passes || 0) + ' průchodů hlavní smyčky/s · ' + fmt(r.game, 2) + ' ms na snímek (nejvíc ' + fmt(r.gameMax) + ' ms najednou, ' + fmt(r.gameLoad) + ' % času)\n' +
-    'náskok hry ' + fmt(r.ahead || 0, 0) + ' ms · obraz pozadu za hrou: kamera ' + fmt(r.latC, 0) + ' ms, objekty ' + fmt(r.latO, 0) + ' ms · zvuk: zásoba ' + fmt(r.lead, 0) + ' ms + výstup prohlížeče ' + fmt(r.out || 0, 0) + ' ms, výpadků ' + r.under + '\n' +
-    (r.lt && r.lt.length ? 'dlouhé úlohy prohlížeče: ' + r.lt.length + ' (nejdelší ' + fmt(Math.max(...r.lt.map((x) => x.d)), 0) + ' ms: ' + r.lt.reduce((a, b) => (b.d > a.d ? b : a)).who + ')\n' : '') +
-    'mezipolohy: chybí další snímek (kamera) ' + fmt(r.noB, 1) + ' %, chybí příští průchod (objekty) ' + fmt(r.noOB, 1) + ' %, dopočet dopředu ' + fmt(r.ext || 0, 1) + ' % snímků displeje\n' +
-    (r.jerkN ? 'pohyb objektů (WebGL): nerovnoměrnost kroku ' + fmt(r.jerk, 2) + ' px hry, skok > 0,5 px u ' + fmt(r.jerkBig, 1) + ' % kroků (' + r.jerkN + ')\n' : '') +
-    'skládání obrazu (view.h) ' + fmt(r.view, 2) + ' ms · nahrání ' + fmt(r.up, 2) + ' ms · plátno ' + fmt(r.paint, 2) + ' ms · smyčka stránky ' + fmt(r.loop, 2) + ' ms (nejvíc ' + fmt(r.loopMax) + ' ms) na snímek displeje';
+  const monText = (r) => 'display ' + fmt(r.hz) + ' Hz (' + fmt(r.budget) + ' ms per frame) · frames ' + r.fps + '/s · dropped ' + r.drops + ' (longest ' + fmt(r.maxInt) + ' ms)\n' +
+    'game ' + r.gf + ' frames/s, ' + (r.passes || 0) + ' main loop passes/s · ' + fmt(r.game, 2) + ' ms per frame (max ' + fmt(r.gameMax) + ' ms at once, ' + fmt(r.gameLoad) + ' % of the time)\n' +
+    'game ahead ' + fmt(r.ahead || 0, 0) + ' ms · picture behind the game: camera ' + fmt(r.latC, 0) + ' ms, objects ' + fmt(r.latO, 0) + ' ms · audio: buffer ' + fmt(r.lead, 0) + ' ms + browser output ' + fmt(r.out || 0, 0) + ' ms, underruns ' + r.under + '\n' +
+    (r.lt && r.lt.length ? 'long browser tasks: ' + r.lt.length + ' (longest ' + fmt(Math.max(...r.lt.map((x) => x.d)), 0) + ' ms: ' + r.lt.reduce((a, b) => (b.d > a.d ? b : a)).who + ')\n' : '') +
+    'in-betweens: next frame missing (camera) ' + fmt(r.noB, 1) + ' %, next pass missing (objects) ' + fmt(r.noOB, 1) + ' %, extrapolated ' + fmt(r.ext || 0, 1) + ' % of display frames\n' +
+    (r.jerkN ? 'object motion (WebGL): step unevenness ' + fmt(r.jerk, 2) + ' game px, jump > 0.5 px in ' + fmt(r.jerkBig, 1) + ' % of steps (' + r.jerkN + ')\n' : '') +
+    'compose (view.h) ' + fmt(r.view, 2) + ' ms · upload ' + fmt(r.up, 2) + ' ms · canvas ' + fmt(r.paint, 2) + ' ms · page loop ' + fmt(r.loop, 2) + ' ms (max ' + fmt(r.loopMax) + ' ms) per display frame';
   function monReport() {
     const d = menu.getMode(modeOf(), 'display'), n = monHist.length || 1, sum = (k) => monHist.reduce((a, r) => a + r[k], 0), mx = (k) => Math.max(0, ...monHist.map((r) => r[k]));
-    const env = ['prohlížeč ' + navigator.userAgent, 'devicePixelRatio ' + dprNow() + ', okno ' + innerWidth + ' × ' + innerHeight + ', plátno ' + screen.width + ' × ' + screen.height + ' px zařízení (×' + disp.S + ')',
-      'režim ' + modeOf() + ', výhled ' + curW() + ' × ' + curH() + ', plynulé ' + (d.smooth ? 'ano' : 'ne') + ', zvětšení ' + (d.zoom ? fmt(d.zoom, 2) + '×' : 'do okna') + ', CRT ' + (d.crt ? d['crt-detail'] + ' ' + d['crt-shape'] : 'ne') + ', rozmazání ' + d.blur + ' %, jas ' + d.brightness + ' %, šířka bodu ' + d.par,
-      'engine ' + (MT ? 've vlastním vlákně (sdílená paměť)' : 'v hlavním vlákně (korutina)') + ', zvuk: zásoba cíl ' + (MT ? AUD.mt.target : AUD.msg.target) + ' ms, výstup prohlížeče ' + (audio ? fmt(1000 * ((audio.outputLatency || 0) + (audio.baseLatency || 0)), 0) : '?') + ' ms',
-      'takt ' + (vs.k ? 'podle displeje ' + vs.k + ':1' : 'hodiny hry 50 Hz, mezipolohy') + ' (volba ' + vs.pref + '), level ' + levelNo(level) + (M && M._engine_peek8 ? ', ' + $('w-now').textContent : '')];
+    const env = ['browser ' + navigator.userAgent, 'devicePixelRatio ' + dprNow() + ', window ' + innerWidth + ' × ' + innerHeight + ', screen ' + screen.width + ' × ' + screen.height + ' device px (×' + disp.S + ')',
+      'mode ' + modeOf() + ', view ' + curW() + ' × ' + curH() + ', smooth ' + (d.smooth ? 'yes' : 'no') + ', zoom ' + (d.zoom ? fmt(d.zoom, 2) + '×' : 'fit') + ', CRT ' + (d.crt ? d['crt-detail'] + ' ' + d['crt-shape'] : 'no') + ', blur ' + d.blur + ' %, brightness ' + d.brightness + ' %, pixel width ' + d.par,
+      'engine ' + (MT ? 'in its own thread (shared memory)' : 'in the main thread (coroutine)') + ', audio: buffer target ' + (MT ? AUD.mt.target : AUD.msg.target) + ' ms, browser output ' + (audio ? fmt(1000 * ((audio.outputLatency || 0) + (audio.baseLatency || 0)), 0) : '?') + ' ms',
+      'pacing ' + (vs.k ? 'by the display ' + vs.k + ':1' : '50 Hz game clock, in-betweens') + ' (setting ' + vs.pref + '), level ' + levelNo(level) + (M && M._engine_peek8 ? ', ' + $('w-now').textContent : '')];
     const lts = monHist.flatMap((r) => r.lt || []);
-    const avg = 'průměr za ' + monHist.length + ' s: snímků ' + fmt(sum('fps') / n) + '/s, vypadlo celkem ' + sum('drops') + ' (nejdelší ' + fmt(mx('maxInt')) + ' ms); obraz pozadu: kamera ' + fmt(sum('latC') / n, 0) + ' ms, objekty ' + fmt(sum('latO') / n, 0) + ' ms; zásoba zvuku ' + fmt(sum('lead') / n, 0) + ' ms, výpadků zvuku ' + sum('under') + ' (zahozeno ' + (audioSt.drop || 0) + ' vzorků); dlouhé úlohy prohlížeče ' + lts.length + (lts.length ? ' [' + lts.map((x) => fmt(x.d, 0) + ' ms ' + x.who).join('; ') + ']' : '') + '; hra ' + fmt(sum('game') / n, 2) + ' ms na snímek (nejvíc ' + fmt(mx('gameMax')) + ' ms), skládání ' + fmt(sum('view') / n, 2) + ' ms, plátno ' + fmt(sum('paint') / n, 2) + ' ms, smyčka ' + fmt(sum('loop') / n, 2) + ' ms (nejvíc ' + fmt(mx('loopMax')) + ' ms)';
-    return ['Alien Breed II – měření výkonu', ...env, avg, 'po sekundách:', ...monHist.map((r, i) => (i + 1) + '. ' + monText(r).replace(/\n/g, ' | '))].join('\n');
+    const avg = 'average over ' + monHist.length + ' s: frames ' + fmt(sum('fps') / n) + '/s, dropped in total ' + sum('drops') + ' (longest ' + fmt(mx('maxInt')) + ' ms); picture behind: camera ' + fmt(sum('latC') / n, 0) + ' ms, objects ' + fmt(sum('latO') / n, 0) + ' ms; audio buffer ' + fmt(sum('lead') / n, 0) + ' ms, audio underruns ' + sum('under') + ' (dropped ' + (audioSt.drop || 0) + ' samples); long browser tasks ' + lts.length + (lts.length ? ' [' + lts.map((x) => fmt(x.d, 0) + ' ms ' + x.who).join('; ') + ']' : '') + '; game ' + fmt(sum('game') / n, 2) + ' ms per frame (max ' + fmt(mx('gameMax')) + ' ms), compose ' + fmt(sum('view') / n, 2) + ' ms, canvas ' + fmt(sum('paint') / n, 2) + ' ms, loop ' + fmt(sum('loop') / n, 2) + ' ms (max ' + fmt(mx('loopMax')) + ' ms)';
+    return ['Alien Breed II – performance measurement', ...env, avg, 'per second:', ...monHist.map((r, i) => (i + 1) + '. ' + monText(r).replace(/\n/g, ' | '))].join('\n');
   }
   let workMs = 0, workN = 0, statT = 0;
   // hotové snímky z korutiny hry (obraz = záznam view.h, zvuk z kruhu), časy podle zvukových hodin
@@ -768,7 +782,7 @@
       if (f.ok && !passT.has(pass) && !(pass < PACE.maxPass && PACE.maxPass - pass < 16)) { PACE.maxPass = pass; passT.set(pass, f.t); if (PACE.lastPassT >= 0) { PACE.lens.push((f.t - PACE.lastPassT) * 1000); if (PACE.lens.length > 16) PACE.lens.shift(); } PACE.lastPassT = f.t; }
       frames.push(f); workN++; mon.gf++; if (f.ok && pass !== mon.lastPass) { mon.lastPass = pass; mon.passes++; }   // průchody hlavní smyčky hry (normálně 25/s)
       if (MT && M._engine_fr_ms) { const ms = M._engine_fr_ms(n); if (ms >= 0) { mon.game += ms; if (ms > mon.gameMax) mon.gameMax = ms; } }   // výpočet snímku ve vlákně hry
-      const lv = M._engine_fr_level(n); if (lv !== level) { level = lv; log('level ' + lv + ' (snímek ' + M._engine_fr_frame(n) + ')'); }
+      const lv = M._engine_fr_level(n); if (lv !== level) { level = lv; log('level ' + lv + ' (frame ' + M._engine_fr_frame(n) + ')'); }
       if (an > 0 && audioNode && !MT && !jumpTo) {
         const b = new Int16Array(an * 2), s = M.HEAP16;
         for (let i = 0; i < an; i++) { const w = (a0 + i) % asz; b[2 * i] = s[ring + 2 * w]; b[2 * i + 1] = s[ring + 2 * w + 1]; }
@@ -779,9 +793,9 @@
     if (passT.size > 64) for (const k of [...passT.keys()].slice(0, passT.size - 32)) passT.delete(k);
     pollSnap();
     const e = M._engine_error();
-    if (e) { setStatus('Error: routine $' + e.toString(16) + ' is not translated'); log('hra stojí: rutina $' + e.toString(16) + ' není přeložená'); running = false; }
+    if (e) { setStatus('Error: routine $' + e.toString(16) + ' is not translated'); log('game stopped: routine $' + e.toString(16) + ' is not translated'); running = false; }
     if (M._engine_ended() && !levelDone && got >= done) {   // publikace: hra skončila po posledním povoleném levelu
-      levelDone = true; running = false; log('konec ukázky (publikace)'); setStatus('End of the preview – thanks for playing!'); if ($('preview-end')) $('preview-end').hidden = false; shell.openDialog('about-shade');
+      levelDone = true; running = false; log('end of the preview (public build)'); setStatus('End of the preview – thanks for playing!'); if ($('preview-end')) $('preview-end').hidden = false; shell.openDialog('about-shade');
     }
   }
   // takt podle displeje (bod 8): displej k × 50 Hz (50, 100, 150, 200 Hz; změřeno z requestAnimationFrame) -> přesně jeden snímek
@@ -802,7 +816,7 @@
     const med = [...vs.dts].sort((a, b) => a - b)[vs.dts.length >> 1]; vs.hz = 1000 / med;
     let k = vs.pref === 'audio' ? 0 : [1, 2, 3, 4].find((j) => Math.abs(vs.hz / j - 50) < 0.6) || 0;
     if (vs.force) k = 1;
-    if (k !== vs.k) { vs.k = k; PACE.clock = 0; log(k ? 'takt podle displeje: ' + vs.hz.toFixed(2) + ' Hz, ' + k + ' snímk' + (k === 1 ? '' : 'y') + ' displeje na snímek hry' : 'takt: hodiny hry 50 Hz z displeje ' + vs.hz.toFixed(1) + ' Hz, mezipolohy'); }
+    if (k !== vs.k) { vs.k = k; PACE.clock = 0; log(k ? 'pacing by the display: ' + vs.hz.toFixed(2) + ' Hz, ' + k + ' display frame' + (k === 1 ? '' : 's') + ' per game frame' : 'pacing: 50 Hz game clock from a ' + vs.hz.toFixed(1) + ' Hz display, in-betweens'); }
   }
   function loop(ts) { const t0 = performance.now(); glGuardStep(ts, sub.gl && running && !manualPause && !menuPause && !document.hidden && !restarting && !(typeof jumpTo !== 'undefined' && jumpTo)); loopIn(ts); const d = performance.now() - t0; perf.loop += d; perf.ln++; if (mon.hook) mon.hook(ts, d); }
   function loopIn(ts) {
@@ -846,7 +860,7 @@
     if (performance.now() - statT > 1000) {
       statT = performance.now();
       setStatus('Playing · level ' + levelNo(level) + (vs.hz ? ' · ' + vs.hz.toFixed(0) + ' Hz' + (vs.k ? ' locked' : '') : ''));
-      if ($('frame-status')) $('frame-status').textContent = 'snímků hry ' + workN + '/s · ' + (vs.k ? 'takt podle displeje ' + vs.hz.toFixed(2) + ' Hz (' + vs.k + ':1)' : 'hodiny hry 50 Hz') + ' · obraz ' + (viewN ? (viewMs / viewN).toFixed(2) + ' ms na snímek displeje (' + viewN + '/s)' : 'snímek originálu') + ' · zvuk ' + (clockAudio ? 'běží, zásoba ' + Math.round(audioSt.fill || 0) + ' ms' : 'čeká na kliknutí') + ' · filtr LED ' + (lastLed ? 'zapnutý' : 'vypnutý');
+      if ($('frame-status')) $('frame-status').textContent = 'game frames ' + workN + '/s · ' + (vs.k ? 'paced by the display ' + vs.hz.toFixed(2) + ' Hz (' + vs.k + ':1)' : '50 Hz game clock') + ' · picture ' + (viewN ? (viewMs / viewN).toFixed(2) + ' ms per display frame (' + viewN + '/s)' : 'original frame') + ' · audio ' + (clockAudio ? 'running, buffer ' + Math.round(audioSt.fill || 0) + ' ms' : 'waiting for a click') + ' · LED filter ' + (lastLed ? 'on' : 'off');
       workMs = 0; workN = 0; viewMs = 0; viewN = 0;
     }
     requestAnimationFrame(loop);
@@ -893,7 +907,7 @@
     // ABRII je bludiště: na začátku levelu 1 stojí kamera hry na pravém kraji mapy a volno je ~3,2 s doleva (změřeno, M16)
     route: [['ArrowLeft', 2800], ['ArrowRight', 2800]] };
   // prepare (WBLONGRUN 1.1): do hry – Ladění → skok na level 1 (úvod a menu čekají na fire), pak Vylepšeno
-  WBLONGRUN.prepare = async () => { measureGod = true; log('měření: hráč bez zranění ($C00FB6)'); const wait = (f, ms) => new Promise((res, rej) => { const t0 = performance.now(), k = () => { if (f()) res(true); else if (performance.now() - t0 > ms) rej(new Error('prepare: čas vypršel')); else setTimeout(k, 100); }; k(); }); await wait(() => running && !!M, 60000); if (!(level === 1 && !jumpTo && WBLONGRUN.ready())) { $('j-level').value = '1'; $('j-go').click(); await wait(() => level === 1 && !jumpTo && WBLONGRUN.ready(), 180000); } if (disp.mode !== 'enhanced') { switchMode('enhanced'); await wait(() => !disp.anim && disp.mode === 'enhanced', 5000); } await new Promise((r) => setTimeout(r, 1000)); return true; };
+  WBLONGRUN.prepare = async () => { measureGod = true; log('measurement: player invulnerable ($C00FB6)'); const wait = (f, ms) => new Promise((res, rej) => { const t0 = performance.now(), k = () => { if (f()) res(true); else if (performance.now() - t0 > ms) rej(new Error('prepare: timed out')); else setTimeout(k, 100); }; k(); }); await wait(() => running && !!M, 60000); if (!(level === 1 && !jumpTo && WBLONGRUN.ready())) { $('j-level').value = '1'; $('j-go').click(); await wait(() => level === 1 && !jumpTo && WBLONGRUN.ready(), 180000); } if (disp.mode !== 'enhanced') { switchMode('enhanced'); await wait(() => !disp.anim && disp.mode === 'enhanced', 5000); } await new Promise((r) => setTimeout(r, 1000)); return true; };
   window.abii = { peek: (a) => (M ? M._engine_peek8(a) : -1), poke: (a, v) => (M ? M._engine_poke8(a, v) : -1), dbgStop: () => (M && M._engine_stop ? M._engine_stop() : -1), mt: () => MT, ahead: () => (PACE.lastT ? PACE.lastT - performance.now() : 0), audioSt: () => Object.assign({}, audioSt), glCheck, gl: () => ({ on: glv.on, want: glv.want, active: sub.gl, webkit: WEBKIT, guard: Object.assign({}, glGuard), stats: Object.assign({}, GL.stats), cache: GL.cacheSize() }), width: () => curW(), height: () => curH(), sub: () => Object.assign({}, sub), cam: () => (M ? [M._engine_view_camx(), M._engine_view_camy()] : null), dbg: () => disp.dbg, aud: () => { const r = Object.assign({ state: audio ? audio.state : 'none', clock: clockAudio, gain: zvuk ? zvuk.volume.gain.value : null }, aud); aud.n = 0; aud.peak = 0; aud.late = 0; aud.skipped = 0; aud.maxN = 0; aud.maxAn = 0; aud.ticks = 0; r.last = aud.last.slice(); return r; }, running: () => running, perf: () => { const r = { paint: perf.paint / Math.max(1, perf.n), view: perf.view / Math.max(1, perf.ln), loop: perf.loop / Math.max(1, perf.ln), frames: perf.ln, lock: vs.k, hz: vs.hz }; perf.paint = perf.view = perf.loop = perf.n = perf.ln = 0; return r; }, frameNo: () => (M ? M._engine_frame_no() : -1), mode: () => modeOf(), led: () => (M ? M._engine_led() : null), audio: () => (audio ? audio.state : 'none') };
 
   // ---------------------------------------------------------------- start stránky
@@ -906,17 +920,17 @@
       const got = [];
       for (const u of urlDisks) {
         const url = new URL(u, location.href);
-        if (url.origin !== location.origin) { log(u + ': jen diskety ze stejného původu'); continue; }
+        if (url.origin !== location.origin) { log(u + ': only disks from the same origin'); continue; }
         try { const r = await fetch(url); if (!r.ok) throw new Error(r.status); got.push({ name: decodeURIComponent(url.pathname.split('/').pop()), buf: await r.arrayBuffer() }); }
-        catch (e) { log(u + ': nelze načíst (' + e.message + ')'); }
+        catch (e) { log(u + ': cannot load (' + e.message + ')'); }
       }
-      if (got.length) { disks = got.slice(-3); await showDisks(); setStatus('Disks from the address – Start game'); log('diskety z adresy: ' + got.map((d) => d.name).join(', ')); return; }
+      if (got.length) { disks = got.slice(-3); await showDisks(); setStatus('Disks from the address – Start game'); log('disks from the address: ' + got.map((d) => d.name).join(', ')); return; }
     }
     // vývoj na localhostu: diskety z arek web serve (bez výběru); jinak uložené v prohlížeči
     if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
       try {
         const rs = await Promise.all(['disk1', 'disk2', 'disk3'].map((n) => fetch('local-disks/' + n + '.adf', { cache: 'no-store' })));
-        if (rs[0].ok && rs[1].ok) { disks = await Promise.all(rs.filter((r) => r.ok).map(async (r, i) => ({ name: 'disk' + (i + 1) + '.adf (dev)', buf: await r.arrayBuffer() }))); await showDisks(); log('vývoj: diskety z local/'); start(); return; }
+        if (rs[0].ok && rs[1].ok) { disks = await Promise.all(rs.filter((r) => r.ok).map(async (r, i) => ({ name: 'disk' + (i + 1) + '.adf (dev)', buf: await r.arrayBuffer() }))); await showDisks(); log('dev: disks from local/'); start(); return; }
       } catch (e) { /* bez vývojového serveru */ }
     }
     const saved = await loadDisks();
